@@ -1,47 +1,76 @@
-﻿namespace robot_sim
+﻿using System.Diagnostics;
+
+namespace robot_sim
 {
     public static class Simulator
     {
+        private static Stopwatch sw = new Stopwatch();
         private static Random random = new Random();
-        private static System.Timers.Timer timer;
+        private static int idCount;
         private static int ticks;
         private static List<Robot> robots;
-        private static List<Position> pickerLocations = new List<Position>
-        {
-            new Position(1, 10), new Position(1, 20), new Position(1, 30), new Position(1, 40),
-            new Position(1, 50), new Position(1, 60), new Position(1, 70), new Position(1, 80),
-        };
+        private static List<Position> pickerLocations;
 
-        private static int robotCap = 1;
-        private static int faultChance = 10;
+        // these values can be set through the UI
+        public static bool resetFlag = true;
+        public static int robotCap = 1;
+        public static double faultChance = 5.0;
+
+        public static void StartThread()
+        {
+            Thread thread = new Thread(StartTicking);
+            thread.Start();
+        }
 
         public static void StartTicking()
         {
-            // starts and resets too
-            if (timer == null)
+            while (true)
             {
-                ticks = 0;
-                robots = new List<Robot>();
-
-                timer = new System.Timers.Timer();
-                timer.Interval = 1000;
-                timer.Elapsed += tick;
-                timer.Start();
+                if (resetFlag)
+                {
+                    idCount = 0;
+                    ticks = 0;
+                    robots = new List<Robot>();
+                    pickerLocations = new List<Position>();
+                    for (int i = 10; i < 99; i = i + 10) pickerLocations.Add(new Position(i, 1));
+                    resetFlag = false;
+                }
+                sw.Reset();
+                sw.Start();
+                tick();
+                sw.Stop();
+                if (sw.ElapsedMilliseconds < 1000) Thread.Sleep(Convert.ToInt32(1000l - sw.ElapsedMilliseconds));
             }
         }
 
-        private static void tick(object sender, EventArgs e)
+        private static void tick()
         {
-            System.Diagnostics.Debug.WriteLine("tick " + ticks++);
-            
-            if (robots.Count < robotCap)
+            if (!(pickerLocations == null || pickerLocations.Count == 0 || pickerLocations[0].x == 0))
             {
-                addRobots();
-            }
+                Debug.WriteLine("tick " + ticks++);
 
-            foreach(Robot robot in robots)
-            {
+                Debug.WriteLine("Added " + (robotCap - robots.Count) + " robots (num: " + robots.Count + ", cap: " + robotCap + ")");
+                if (robots.Count < robotCap) addRobots();
 
+                foreach (Robot robot in robots)
+                {
+                    // the robot made it to the picker, flag 3 = success
+                    if (robot.position.x == robot.pickerLocation.x && robot.position.y == robot.pickerLocation.y) robot.statusFlag = 3;
+
+                    // flag 1 = warning, robot needs path recalculation
+                    if (robot.statusFlag == 1) robot.expectedPath = calculatePath(robot.position, robot.pickerLocation);
+
+                    if (robot.statusFlag < 2) moveRobot(robot);
+
+                    //Debug.WriteLine(robot.ToString());
+                }
+
+                Debug.WriteLine("Warnings:\t" + (robots.Where(r => r.statusFlag == 1).Count()) + " (chance " + faultChance + "%)");
+                Debug.WriteLine("Broken:\t\t" + (robots.Where(r => r.statusFlag == 2).Count()) + " (chance " + Math.Round((faultChance / 100) * (faultChance / 100) * 100, 2) + "%)");
+                Debug.WriteLine("Successes:\t" + (robots.Where(r => r.statusFlag == 3).Count()));
+                robots.RemoveAll(r => r.statusFlag == 2 || r.statusFlag == 3);
+
+                Debug.WriteLine("");
             }
         }
 
@@ -49,20 +78,63 @@
         {
             for (int i = robots.Count; i < robotCap; i++)
             {
-                var rStartX = random.Next(0, 99);
-                var rStartY = random.Next(15, 99);
+                var position = new Position(random.Next(0, 99), random.Next(15, 29)); // start position
 
-                var expectedPath = new List<Position>();
+                var pickerLocation = pickerLocations[random.Next(0, 7)]; // random picker location
 
+                var expectedPath = calculatePath(position, pickerLocation); // calculate the expected route to picker
 
-                robots.Add(new Robot(ticks, new Position { x = rStartX, y = rStartY }));
-
+                robots.Add(new Robot(idCount++, position, expectedPath, pickerLocation));
             }
         }
 
-        private static void moveRobot()
+        private static Queue<Position> calculatePath(Position fromPosition, Position toPosition)
         {
-            // move the robot closer to
+            var expectedPath = new Queue<Position>();
+            var currentX = fromPosition.x;
+            var currentY = fromPosition.y;
+            while (currentX != toPosition.x && currentY != toPosition.y)
+            {
+                // determines if we move the robot on x else y axis
+                if (Math.Abs(toPosition.x - currentX) > Math.Abs(toPosition.y - currentY))
+                {
+                    if (toPosition.x - currentX > 0) expectedPath.Enqueue(new Position(++currentX, currentY));
+                    else expectedPath.Enqueue(new Position(--currentX, currentY));
+                }
+                else
+                {
+                    if (toPosition.y - currentY > 0) expectedPath.Enqueue(new Position(currentX, ++currentY));
+                    else expectedPath.Enqueue(new Position(currentX, --currentY));
+                }
+            }
+            expectedPath.Enqueue(toPosition);
+            return expectedPath;
+        }
+
+        private static void moveRobot(Robot robot)
+        {
+            // correct movement otherwise wrong movement
+            var expectedMove = robot.expectedPath.Dequeue();
+            if (random.NextDouble() * 100.0 > faultChance - 1.0)
+            {
+                robot.position = expectedMove;
+                robot.statusFlag = 0;
+            }
+            else
+            {
+                do
+                {
+                    // wrong movement calculation continues untill one actually differs
+                    var rMove = random.Next(0, 4); // 0 means no movement
+                    if (rMove == 1) robot.position.x--;
+                    else if (rMove == 2) robot.position.y++;
+                    else if (rMove == 3) robot.position.x++;
+                    else if (rMove == 4) robot.position.y--;
+                } while (robot.position.x != expectedMove.x && robot.position.y != expectedMove.y);
+
+                // if robot is status good, then set warning -- if warning set broken (flag 2)
+                robot.statusFlag = robot.statusFlag == 0 ? 1 : 2;
+            }
         }
     }
 }

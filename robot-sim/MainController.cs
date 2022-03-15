@@ -21,7 +21,7 @@ namespace robot_sim.Controllers
         [HttpGet("/raw")]
         public ActionResult<string> GetRaw()
         {
-            return "raw";
+            throw new NotImplementedException();
         }
 
         [HttpGet("/bundled")]
