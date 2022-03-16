@@ -13,8 +13,8 @@ namespace robot_sim
 
         // these values can be set through the UI
         public static bool resetFlag = true;
-        public static int robotCap = 10;
-        public static double faultChance = 25.0;
+        public static int robotCap = 25;
+        public static double faultChance = 2.5;
 
         public static void StartThread()
         {
