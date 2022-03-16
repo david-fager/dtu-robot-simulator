@@ -8,6 +8,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-robot_sim.Simulator.StartTicking();
+robot_sim.Simulator.StartThread();
 
 app.Run("http://localhost:8000");

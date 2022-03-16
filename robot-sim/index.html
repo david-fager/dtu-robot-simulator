@@ -2,39 +2,103 @@
 <html>
 <head>
     <style>
-        .grid-container {
-            display: grid;
-            grid-template-columns: auto auto auto;
-            background-color: #2196F3;
-            padding: 10px;
+        .container {
         }
 
-        .grid-item {
-            background-color: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            font-size: 30px;
-            text-align: center;
+        .grid {
+            
+        }
+
+        .cell {
+            justify-content: center;
+            align-items: center;
+            display: flex;
+            background: white;
         }
     </style>
+    <script>
+        window.onload = function () {
+            var resetRequested = false;
+
+            var grid = document.getElementById("grid");
+            for (let i = 49; i >= 0; i--) {
+                for (let j = 0; j < 100; j++) {
+                    const square = document.createElement("div");
+                    square.className = "cell";
+                    square.id = j + "-" + i
+                    grid.appendChild(square);
+                }
+            }
+
+            window.setInterval(function () {
+                fetch('http://localhost:8000/complete')
+                    .then(response => response.json())
+                    .then(data => {
+                        for (let i = 49; i >= 0; i--) {
+                            for (let j = 0; j < 100; j++) {
+                                document.getElementById(j + "-" + i).style.backgroundColor = "white";
+                                if (i === 0) {
+                                    for (let picker of data.pickers) {
+                                        if (j === picker.x) {
+                                            document.getElementById(j + "-" + i).style.backgroundColor = "orange";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        document.getElementById("tick").textContent = data.ticks;
+                        document.getElementById("robots").textContent = data.robots.length + " / " + data.robotCap;
+                        document.getElementById("fault").textContent = data.faultChance + "%";
+                        document.getElementById("reset").disabled = data.resetFlag || resetRequested;
+
+                        for (let robot of data.robots) {
+                            for (let move of robot.expectedPath) {
+                                if (!(move.x === robot.pickerLocation.x && move.y === robot.pickerLocation.y)) {
+                                    document.getElementById(move.x + "-" + move.y).style.backgroundColor = "lightblue";
+                                }
+                            }
+
+                            if (robot.statusFlag === 0) {
+                                document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "grey";
+                            } else if (robot.statusFlag === 1) {
+                                document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "yellow";
+                            } else {
+                                document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "red";
+                            }
+                        }
+                    });
+            }, 1000);
+        };
+    </script>
 </head>
 <body>
+    <div style="display: flex;">
+        <div class="container" style="background: black; border: 1px solid black; margin: 0 15px 15px 0;">
+            <div class="grid" id="grid" style="display: grid; grid-template-columns: repeat(100, 10px); grid-template-rows: repeat(50, 10px); grid-gap: 1px;">
+            </div>
+        </div>
 
-    <h1>display: grid</h1>
+        <div>
+            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Tick:</p><p id="tick" style="display: inline-block; margin: 0;"></p></div>
+            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p><p id="robots" style="display: inline-block; margin: 0;"></p></div>
+            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Fault chance:</p><p id="fault" style="display: inline-block; margin: 0;"></p></div>
+            <div><button id="reset" style="display: inline-block; margin-top: 1em; margin-bottom: 0; ">reset</button></div>
 
-    <p>Use display: grid; to make a block-level grid container:</p>
+            <div style="margin: 50px;"></div>
 
-    <div class="grid-container">
-        <div class="grid-item">1</div>
-        <div class="grid-item">2</div>
-        <div class="grid-item">3</div>
-        <div class="grid-item">4</div>
-        <div class="grid-item">5</div>
-        <div class="grid-item">6</div>
-        <div class="grid-item">7</div>
-        <div class="grid-item">8</div>
-        <div class="grid-item">9</div>
+            <div style="margin-bottom: 10px;">
+                <div>Robots</div>
+                <input id="number" type="number" /><button>Change</button>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>Fault chance (%)</div>
+                <input id="number" type="number" placeholder="Percent" /><button>Change</button>
+            </div>
+        </div>
+
     </div>
+
 
 </body>
 </html>

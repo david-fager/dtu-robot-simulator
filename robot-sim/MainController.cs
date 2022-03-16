@@ -19,15 +19,25 @@ namespace robot_sim.Controllers
 
 
         [HttpGet("/raw")]
-        public ActionResult<string> GetRaw()
+        public IActionResult GetRaw()
         {
             throw new NotImplementedException();
         }
 
-        [HttpGet("/bundled")]
-        public ActionResult<string> GetBundled()
+        [HttpGet("/complete")]
+        public IActionResult GetComplete()
         {
-            return "bundled";
+            var data = new DataTemplate()
+            {
+                ticks = Simulator.ticks,
+                robots = Simulator.robots,
+                pickers = Simulator.pickerLocations,
+                resetFlag = Simulator.resetFlag,
+                robotCap = Simulator.robotCap,
+                faultChance = Simulator.faultChance,
+            };
+
+            return Ok(data);
         }
 
         [HttpPut("/edit")]
@@ -36,4 +46,15 @@ namespace robot_sim.Controllers
             
         }
     }
+
+    public class DataTemplate
+    {
+        public int ticks { get; set; }
+        public List<Robot> robots { get; set; }
+        public List<Position> pickers { get; set; }
+        public bool resetFlag { get; set; }
+        public int robotCap { get; set; }
+        public double faultChance { get; set; }
+    }
+
 }
