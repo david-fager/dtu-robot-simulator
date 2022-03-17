@@ -11,24 +11,51 @@
     </style>
     <script>
         window.onload = function () {
-            var resetRequested = false;
+            var currentSpeed = 1000;
+
+            var resetBtn = document.getElementById("btn-reset");
+            var addRobBtn = document.getElementById("btn-addRob");
+
+            var tickSpeedBtn = document.getElementById("btn-tickSpeed");
+            var robMaxBtn = document.getElementById("btn-robMax");
+            var faultBtn = document.getElementById("btn-fault");
+
+            var requestAwaitResponse = false;
 
             buildGrid();
 
-            window.setInterval(() => {
-                fetch('http://localhost:8000/complete')
+            loop();
+            function loop() {
+                fetch("http://localhost:8000/complete")
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById("tick").textContent = data.ticks + " (" + data.tickSpeed + " tick/sec)";
-                        document.getElementById("robots").textContent = data.robots.length + " / " + data.robotCap;
-                        document.getElementById("fault").textContent = data.faultChance + "%";
-                        document.getElementById("reset").disabled = data.resetFlag || resetRequested;
+                        if (data.tickSpeed <= 250) {
+                            currentSpeed = 250;
+                        } else if (data.tickSpeed >= 1000) {
+                            currentSpeed = 1000;
+                        } else {
+                            currentSpeed = data.tickSpeed;
+                        }
 
-                        clearBoard(data.pickers);
+                        console.log(data.faultChance);
+
+                        document.getElementById("txt-tick").textContent = data.ticks + " (1 tick / " + data.tickSpeed + "ms)";
+                        document.getElementById("txt-robots").textContent = data.robots.length + " / " + data.robotCap;
+                        document.getElementById("txt-fault").textContent = data.faultChance + "%";
+
+                        resetBtn.disabled = data.resetFlag || requestAwaitResponse;
+                        addRobBtn.disabled = requestAwaitResponse;
+
+                        tickSpeedBtn.disabled = requestAwaitResponse;
+                        robMaxBtn.disabled = requestAwaitResponse;
+                        faultBtn.disabled = requestAwaitResponse;
+
+                        clearGrid(data.pickers);
                         placePath(data.robots);
                         placeRobot(data.robots);
                     });
-            }, 1000);
+                window.setTimeout(loop, currentSpeed);
+            };
 
             function buildGrid() {
                 var grid = document.getElementById("grid");
@@ -42,14 +69,14 @@
                 }
             }
 
-            function clearBoard(pickers) {
+            function clearGrid(pickers) {
                 for (let i = 49; i >= 0; i--) {
                     for (let j = 0; j < 100; j++) {
                         document.getElementById(j + "-" + i).style.backgroundColor = "white";
                         if (i === 0) {
                             for (let picker of pickers) {
                                 if (j === picker.x) {
-                                    document.getElementById(j + "-" + i).style.backgroundColor = "orange";
+                                    document.getElementById(j + "-" + i).style.backgroundColor = "#9999ff";
                                 }
                             }
                         }
@@ -61,7 +88,7 @@
                 for (let robot of robots) {
                     for (let move of robot.expectedPath) {
                         if (!(move.x === robot.pickerLocation.x && move.y === robot.pickerLocation.y)) {
-                            document.getElementById(move.x + "-" + move.y).style.backgroundColor = "lightblue";
+                            document.getElementById(move.x + "-" + move.y).style.backgroundColor = "#e6e6ff"; // path color
                         }
                     }
                 }
@@ -70,17 +97,37 @@
             function placeRobot(robots) {
                 for (let robot of robots) {
                     if (robot.statusFlag === 0) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "grey";
+                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#999999"; // normal color
                     } else if (robot.statusFlag === 1) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "yellow";
+                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ffff66"; // warning color
                     } else if (robot.statusFlag === 2) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "red";
+                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ff6666"; // broken color
                     } else if (robot.statusFlag === 3) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "green";
+                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#66ff66"; // success color
                     } else {
                         document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "white";
                     }
                 }
+            }
+
+            resetBtn.onclick = () => editValue(resetBtn, "reset", "");
+            addRobBtn.onclick = () => editValue("", "robot", "");
+
+            tickSpeedBtn.onclick = () => editValue(tickSpeedBtn, "speed", document.getElementById("input-tickSpeed").value);
+            robMaxBtn.onclick = () => editValue(robMaxBtn, "max", document.getElementById("input-robMax").value);
+            faultBtn.onclick = () => editValue(faultBtn, "fault", document.getElementById("input-fault").value);
+            function editValue(object, field, value) {
+                if (object !== "") {
+                    object.disabled = true;
+                }
+                requestAwaitResponse = true;
+                fetch("http://localhost:8000/edit", {
+                    method: "PUT",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ field, value }),
+                }).then(() => requestAwaitResponse = false);
             }
         };
     </script>
@@ -93,20 +140,27 @@
         </div>
 
         <div>
-            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Tick:</p><p id="tick" style="display: inline-block; margin: 0;"></p></div>
-            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p><p id="robots" style="display: inline-block; margin: 0;"></p></div>
-            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Fault chance:</p><p id="fault" style="display: inline-block; margin: 0;"></p></div>
-            <div><button id="reset" style="display: inline-block; margin-top: 1em; margin-bottom: 0; ">reset</button></div>
+            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Tick:</p><p id="txt-tick" style="display: inline-block; margin: 0;"></p></div>
+            <div>
+                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p><p id="txt-robots" style="display: inline-block; margin: 0;"></p>
+                <button id="btn-addRob">Add</button>
+            </div>
+            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Fault chance:</p><p id="txt-fault" style="display: inline-block; margin: 0;"></p></div>
+            <div><button id="btn-reset" style="display: inline-block; margin-top: 1em; margin-bottom: 0;">reset</button></div>
 
             <div style="margin: 50px;"></div>
 
             <div style="margin-bottom: 10px;">
-                <div>Robots</div>
-                <input id="number" type="number" /><button>Change</button>
+                <div>Tick speed</div>
+                <input id="input-tickSpeed" type="number" placeholder="Milliseconds" /><button id="btn-tickSpeed">Change</button>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>Robots max</div>
+                <input id="input-robMax" type="number" /><button id="btn-robMax">Change</button>
             </div>
             <div style="margin-bottom: 10px;">
                 <div>Fault chance (%)</div>
-                <input id="number" type="number" placeholder="Percent" /><button>Change</button>
+                <input id="input-fault" type="number" placeholder="Percent" /><button id="btn-fault">Change</button>
             </div>
         </div>
 

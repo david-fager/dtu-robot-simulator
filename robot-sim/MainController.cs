@@ -27,14 +27,14 @@ namespace robot_sim.Controllers
         [HttpGet("/complete")]
         public IActionResult GetComplete()
         {
-            var data = new DataTemplate()
+            var data = new GetTemplate()
             {
                 ticks = Simulator.ticks,
                 tickSpeed = Simulator.tickSpeed,
                 robots = Simulator.robots,
                 pickers = Simulator.pickerLocations,
                 resetFlag = Simulator.resetFlag,
-                robotCap = Simulator.robotCap,
+                robotCap = Simulator.robotMax,
                 faultChance = Simulator.faultChance,
             };
 
@@ -42,13 +42,42 @@ namespace robot_sim.Controllers
         }
 
         [HttpPut("/edit")]
-        public void Edit()
+        public ActionResult Edit(PutTemplate template)
         {
-            
+            System.Diagnostics.Debug.WriteLine("Received: {" + template.field + ", " + template.value + "}");
+
+            if (template.field == "reset") Simulator.resetFlag = true;
+            if (template.field == "robot") Simulator.addRobot();
+
+            if (template.field == "speed")
+                if (int.TryParse(template.value, out int value))
+                {
+                    if (value < 100) Simulator.tickSpeed = 100;
+                    if (value > 60000) Simulator.tickSpeed = 60000;
+                    if (value >= 100 && value <= 60000) Simulator.tickSpeed = value;
+                }
+
+            if (template.field == "max")
+                if (int.TryParse(template.value, out int value))
+                {
+                    if (value < 1) Simulator.robotMax = 1;
+                    if (value > 1000) Simulator.robotMax = 1000;
+                    if (value >= 1 && value <= 1000) Simulator.robotMax = value;
+                }
+
+            if (template.field == "fault")
+                if (double.TryParse(template.value.Replace(".", ","), out double value))
+                {
+                    if (value < 0.0) Simulator.faultChance = 0.0;
+                    if (value > 100.0) Simulator.faultChance = 100.0;
+                    if (value >= 0.0 && value <= 100.0) Simulator.faultChance = value;
+                }
+
+            return Ok();
         }
     }
 
-    public class DataTemplate
+    public class GetTemplate
     {
         public int ticks { get; set; }
         public int tickSpeed { get; set; }
@@ -59,4 +88,9 @@ namespace robot_sim.Controllers
         public double faultChance { get; set; }
     }
 
+    public class PutTemplate
+    {
+        public string field { get; set; }
+        public string value { get; set; }
+    }
 }

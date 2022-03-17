@@ -12,10 +12,10 @@ namespace robot_sim
         public static List<Position> pickerLocations;
 
         // these values can be set through the UI
-        public static int tickSpeed = 1;
         public static bool resetFlag = true;
-        public static int robotCap = 100;
-        public static double faultChance = 10;
+        public static int tickSpeed = 1000; // ms
+        public static int robotMax = 5;
+        public static double faultChance = 3; // %
 
         public static void StartThread()
         {
@@ -36,17 +36,17 @@ namespace robot_sim
                     for (int i = 9; i < 99; i = i + 10) pickerLocations.Add(new Position(i, 0));
                     resetFlag = false;
 
-                    // boundary test bots
-                    //addRobot(new Position(0, 0));
-                    //addRobot(new Position(99, 49));
-                    //addRobot(new Position(0, 49));
-                    //addRobot(new Position(99, 0));
-                }
+        // boundary test bots
+        //addRobot(new Position(0, 0));
+        //addRobot(new Position(99, 49));
+        //addRobot(new Position(0, 49));
+        //addRobot(new Position(99, 0));
+    }
                 sw.Reset();
                 sw.Start();
                 tick();
                 sw.Stop();
-                if (sw.ElapsedMilliseconds < ((long)tickSpeed * 1000l)) Thread.Sleep(Convert.ToInt32(((long)tickSpeed * 1000l) - sw.ElapsedMilliseconds));
+                if (sw.ElapsedMilliseconds < (long)tickSpeed) Thread.Sleep(Convert.ToInt32((long)tickSpeed - sw.ElapsedMilliseconds));
             }
         }
 
@@ -54,7 +54,7 @@ namespace robot_sim
         {
             Debug.WriteLine("tick " + ticks++); // For debugging
 
-            if (robots.Count < robotCap) for (int i = robots.Count; i < robotCap; i++) addRobot();
+            if (robots.Count < robotMax) for (int i = robots.Count; i < robotMax; i++) addRobot();
 
             robots.RemoveAll(r => r.statusFlag == 2 || r.statusFlag == 3);
 
@@ -72,7 +72,7 @@ namespace robot_sim
             }
         }
 
-        private static void addRobot(Position specificPosition = null)
+        public static void addRobot(Position specificPosition = null)
         {
             var position = specificPosition ?? new Position(random.Next(0, 99), random.Next(10, 49)); // start position
 
@@ -124,7 +124,7 @@ namespace robot_sim
         private static void moveRobot(Robot robot)
         {
             // correct movement otherwise wrong movement
-            if (random.NextDouble() * 100.0 > faultChance - 1.0)
+            if (random.NextDouble() * 100.0 > faultChance)
             {
                 robot.position = robot.expectedPath.Dequeue();
                 robot.statusFlag = 0;
