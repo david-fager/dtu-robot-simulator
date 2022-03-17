@@ -12,9 +12,10 @@ namespace robot_sim
         public static List<Position> pickerLocations;
 
         // these values can be set through the UI
+        public static int tickSpeed = 1;
         public static bool resetFlag = true;
-        public static int robotCap = 25;
-        public static double faultChance = 2.5;
+        public static int robotCap = 100;
+        public static double faultChance = 10;
 
         public static void StartThread()
         {
@@ -36,22 +37,22 @@ namespace robot_sim
                     resetFlag = false;
 
                     // boundary test bots
-                    //addRobot(new Position(0, 1));
+                    //addRobot(new Position(0, 0));
                     //addRobot(new Position(99, 49));
                     //addRobot(new Position(0, 49));
-                    //addRobot(new Position(99, 1));
+                    //addRobot(new Position(99, 0));
                 }
                 sw.Reset();
                 sw.Start();
                 tick();
                 sw.Stop();
-                if (sw.ElapsedMilliseconds < 1000) Thread.Sleep(Convert.ToInt32(1000l - sw.ElapsedMilliseconds));
+                if (sw.ElapsedMilliseconds < ((long)tickSpeed * 1000l)) Thread.Sleep(Convert.ToInt32(((long)tickSpeed * 1000l) - sw.ElapsedMilliseconds));
             }
         }
 
         private static void tick()
         {
-            Debug.WriteLine("tick " + ticks++);
+            Debug.WriteLine("tick " + ticks++); // For debugging
 
             if (robots.Count < robotCap) for (int i = robots.Count; i < robotCap; i++) addRobot();
 
@@ -75,7 +76,7 @@ namespace robot_sim
         {
             var position = specificPosition ?? new Position(random.Next(0, 99), random.Next(10, 49)); // start position
 
-            var pickerLocation = pickerLocations[random.Next(0, 7)]; // random picker location
+            var pickerLocation = pickerLocations[random.Next(0, pickerLocations.Count)]; // random picker location
 
             var expectedPath = calculatePath(position, pickerLocation); // calculate the expected route to picker
 
@@ -87,21 +88,36 @@ namespace robot_sim
             var expectedPath = new Queue<Position>();
             var currentX = fromPosition.x;
             var currentY = fromPosition.y;
-            while (currentX != toPosition.x && currentY != toPosition.y)
+
+            var mode = 0;
+            var count = 0;
+            var mod = 5;
+            while (currentX != toPosition.x || currentY != toPosition.y)
             {
-                // determines if we move the robot on x else y axis
-                if (Math.Abs(toPosition.x - currentX) > Math.Abs(toPosition.y - currentY))
+                if (count++ % mod == 0) mode = random.Next(0, 3);
+
+                // direct movement
+                if (mode == 0 || mode == 1)
                 {
-                    if (toPosition.x - currentX > 0) expectedPath.Enqueue(new Position(++currentX, currentY));
-                    else expectedPath.Enqueue(new Position(--currentX, currentY));
+                    if (Math.Abs(toPosition.x - currentX) > Math.Abs(toPosition.y - currentY)) expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
+                    else expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
                 }
-                else
+
+                // prefer x
+                if (mode == 2)
                 {
-                    if (toPosition.y - currentY > 0) expectedPath.Enqueue(new Position(currentX, ++currentY));
-                    else expectedPath.Enqueue(new Position(currentX, --currentY));
+                    if (toPosition.x - currentX != 0) expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
+                    else expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
+                }
+
+                // prefer y
+                if (mode == 3)
+                {
+                    if (toPosition.y - currentY != 0) expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
+                    else expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
                 }
             }
-            expectedPath.Enqueue(toPosition);
+
             return expectedPath;
         }
 

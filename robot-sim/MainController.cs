@@ -30,6 +30,7 @@ namespace robot_sim.Controllers
             var data = new DataTemplate()
             {
                 ticks = Simulator.ticks,
+                tickSpeed = Simulator.tickSpeed,
                 robots = Simulator.robots,
                 pickers = Simulator.pickerLocations,
                 resetFlag = Simulator.resetFlag,
@@ -50,6 +51,7 @@ namespace robot_sim.Controllers
     public class DataTemplate
     {
         public int ticks { get; set; }
+        public int tickSpeed { get; set; }
         public List<Robot> robots { get; set; }
         public List<Position> pickers { get; set; }
         public bool resetFlag { get; set; }
