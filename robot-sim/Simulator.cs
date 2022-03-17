@@ -36,12 +36,13 @@ namespace robot_sim
                     for (int i = 9; i < 99; i = i + 10) pickerLocations.Add(new Position(i, 0));
                     resetFlag = false;
 
-        // boundary test bots
-        //addRobot(new Position(0, 0));
-        //addRobot(new Position(99, 49));
-        //addRobot(new Position(0, 49));
-        //addRobot(new Position(99, 0));
-    }
+                    // boundary test bots
+                    //addRobot(new Position(0, 0));
+                    //addRobot(new Position(99, 49));
+                    //addRobot(new Position(0, 49));
+                    //addRobot(new Position(99, 0));
+                }
+
                 sw.Reset();
                 sw.Start();
                 tick();
@@ -56,17 +57,19 @@ namespace robot_sim
 
             if (robots.Count < robotMax) for (int i = robots.Count; i < robotMax; i++) addRobot();
 
-            robots.RemoveAll(r => r.statusFlag == 2 || r.statusFlag == 3);
+            robots.RemoveAll(r => r.statusFlag > 2);
 
             foreach (Robot robot in robots)
             {
+                if (robot.statusFlag == 0) robot.statusFlag = 1;
+
                 // the robot made it to the picker, flag 3 = success
-                if (robot.position.x == robot.pickerLocation.x && robot.position.y == robot.pickerLocation.y) robot.statusFlag = 3;
+                if (robot.position.x == robot.pickerLocation.x && robot.position.y == robot.pickerLocation.y) robot.statusFlag = 4;
 
                 // flag 1 = warning, robot needs path recalculation
-                if (robot.statusFlag == 1) robot.expectedPath = calculatePath(robot.position, robot.pickerLocation);
+                if (robot.statusFlag == 2) robot.expectedPath = calculatePath(robot.position, robot.pickerLocation);
 
-                if (robot.statusFlag < 2) moveRobot(robot);
+                if (robot.statusFlag < 3) moveRobot(robot);
 
                 //Debug.WriteLine(robot.ToString()); // For debugging
             }
@@ -127,7 +130,7 @@ namespace robot_sim
             if (random.NextDouble() * 100.0 > faultChance)
             {
                 robot.position = robot.expectedPath.Dequeue();
-                robot.statusFlag = 0;
+                if (robot.statusFlag == 2) robot.statusFlag = 0;
             }
             else
             {
@@ -147,8 +150,8 @@ namespace robot_sim
                     else robot.position = new Position(saveX, saveY);
                 }
 
-                // if robot is status good, then set warning -- if warning set broken (flag 2)
-                robot.statusFlag = robot.statusFlag == 0 ? 1 : 2;
+                // if robot is status good, then set warning -- if warning set broken (flag 3)
+                robot.statusFlag = robot.statusFlag == 1 ? 2 : 3;
             }
         }
     }
