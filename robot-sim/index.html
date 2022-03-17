@@ -37,8 +37,6 @@
                             currentSpeed = data.tickSpeed;
                         }
 
-                        console.log(data.faultChance);
-
                         document.getElementById("txt-tick").textContent = data.ticks + " (1 tick / " + data.tickSpeed + "ms)";
                         document.getElementById("txt-robots").textContent = data.robots.length + " / " + data.robotCap;
                         document.getElementById("txt-fault").textContent = data.faultChance + "%";
@@ -96,18 +94,16 @@
 
             function placeRobot(robots) {
                 for (let robot of robots) {
-                    if (robot.statusFlag === 0) {
+                    if (robot.statusFlag === 4) {
+                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#66ff66"; // success color
+                    } else if (robot.statusFlag === 3) {
+                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ff6666"; // broken color
+                    } else if (robot.statusFlag === 2) {
+                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ffff66"; // warning color
+                    } if (robot.statusFlag === 0) {
                         document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ff9538"; // reset color
                     } else if (robot.statusFlag === 1) {
                         document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#999999"; // normal color
-                    } else if (robot.statusFlag === 2) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ffff66"; // warning color
-                    } else if (robot.statusFlag === 3) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ff6666"; // broken color
-                    } else if (robot.statusFlag === 4) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#66ff66"; // success color
-                    } else {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "white";
                     }
                 }
             }

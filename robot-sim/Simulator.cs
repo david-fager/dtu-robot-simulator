@@ -16,6 +16,7 @@ namespace robot_sim
         public static int tickSpeed = 1000; // ms
         public static int robotMax = 5;
         public static double faultChance = 3; // %
+        public static int extraBotsRequested = 0;
 
         public static void StartThread()
         {
@@ -53,7 +54,7 @@ namespace robot_sim
 
         private static void tick()
         {
-            Debug.WriteLine("tick " + ticks++); // For debugging
+            //Debug.WriteLine("tick " + ticks++); // For debugging
 
             if (robots.Count < robotMax) for (int i = robots.Count; i < robotMax; i++) addRobot();
 
@@ -73,9 +74,15 @@ namespace robot_sim
 
                 //Debug.WriteLine(robot.ToString()); // For debugging
             }
+
+            for (int i = 0; i < extraBotsRequested; i++)
+            {
+                addRobot();
+            }
+            extraBotsRequested = 0;
         }
 
-        public static void addRobot(Position specificPosition = null)
+        private static void addRobot(Position specificPosition = null)
         {
             var position = specificPosition ?? new Position(random.Next(0, 99), random.Next(10, 49)); // start position
 

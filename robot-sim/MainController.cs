@@ -47,7 +47,7 @@ namespace robot_sim.Controllers
             System.Diagnostics.Debug.WriteLine("Received: {" + template.field + ", " + template.value + "}");
 
             if (template.field == "reset") Simulator.resetFlag = true;
-            if (template.field == "robot") Simulator.addRobot();
+            if (template.field == "robot") Simulator.extraBotsRequested++;
 
             if (template.field == "speed")
                 if (int.TryParse(template.value, out int value))
