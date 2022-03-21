@@ -19,6 +19,7 @@
             var tickSpeedBtn = document.getElementById("btn-tickSpeed");
             var robMaxBtn = document.getElementById("btn-robMax");
             var faultBtn = document.getElementById("btn-fault");
+            var multBtn = document.getElementById("btn-mult");
 
             var requestAwaitResponse = false;
 
@@ -39,7 +40,8 @@
 
                         document.getElementById("txt-tick").textContent = data.ticks + " (1 tick / " + data.tickSpeed + "ms)";
                         document.getElementById("txt-robots").textContent = data.robots.length + " / " + data.robotCap;
-                        document.getElementById("txt-fault").textContent = data.faultChance + "%";
+                        document.getElementById("txt-norm-fault").textContent = data.faultChance + "%";
+                        document.getElementById("txt-pers-fault").textContent = data.faultChance * data.personalityMultiplier + "% (" + data.faultChance + " * " + data.personalityMultiplier + ")";
 
                         resetBtn.disabled = data.resetFlag || requestAwaitResponse;
                         addRobBtn.disabled = requestAwaitResponse;
@@ -47,10 +49,15 @@
                         tickSpeedBtn.disabled = requestAwaitResponse;
                         robMaxBtn.disabled = requestAwaitResponse;
                         faultBtn.disabled = requestAwaitResponse;
+                        multBtn.disabled = requestAwaitResponse;
+
+                        var elmnt = document.getElementById("listing");
+                        while (elmnt.firstChild) {
+                            elmnt.removeChild(elmnt.firstChild);
+                        }
 
                         clearGrid(data.pickers);
-                        placePath(data.robots);
-                        placeRobot(data.robots);
+                        drawRobots(data.robots);
                     });
                 window.setTimeout(loop, currentSpeed);
             };
@@ -82,18 +89,14 @@
                 }
             }
 
-            function placePath(robots) {
+            function drawRobots(robots) {
                 for (let robot of robots) {
                     for (let move of robot.expectedPath) {
                         if (!(move.x === robot.pickerLocation.x && move.y === robot.pickerLocation.y)) {
                             document.getElementById(move.x + "-" + move.y).style.backgroundColor = "#e6e6ff"; // path color
                         }
                     }
-                }
-            }
 
-            function placeRobot(robots) {
-                for (let robot of robots) {
                     if (robot.statusFlag === 4) {
                         document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#66ff66"; // success color
                     } else if (robot.statusFlag === 3) {
@@ -105,6 +108,12 @@
                     } else if (robot.statusFlag === 1) {
                         document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#999999"; // normal color
                     }
+
+                    var rbt = robot;
+                    rbt.expectedPath = [];
+                    var elmnt = document.createElement("div");
+                    elmnt.textContent = JSON.stringify(rbt);
+                    document.getElementById("listing").appendChild(elmnt);
                 }
             }
 
@@ -114,6 +123,7 @@
             tickSpeedBtn.onclick = () => editValue(tickSpeedBtn, "speed", document.getElementById("input-tickSpeed").value);
             robMaxBtn.onclick = () => editValue(robMaxBtn, "max", document.getElementById("input-robMax").value);
             faultBtn.onclick = () => editValue(faultBtn, "fault", document.getElementById("input-fault").value);
+            multBtn.onclick = () => editValue(multBtn, "mult", document.getElementById("input-mult").value);
             function editValue(object, field, value) {
                 if (object !== "") {
                     object.disabled = true;
@@ -154,8 +164,14 @@
 
             <!-- fault chance text -->
             <div>
-                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Fault chance:</p>
-                <p id="txt-fault" style="display: inline-block; margin: 0;"></p>
+                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Normal fault chance:</p>
+                <p id="txt-norm-fault" style="display: inline-block; margin: 0;"></p>
+            </div>
+
+            <!-- fault chance text -->
+            <div>
+                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Personality fault chance:</p>
+                <p id="txt-pers-fault" style="display: inline-block; margin: 0;"></p>
             </div>
 
             <!-- reset button -->
@@ -182,6 +198,12 @@
             <div style="margin-bottom: 10px;">
                 <div>Fault chance (%)</div>
                 <input id="input-fault" type="number" placeholder="Percent" /><button id="btn-fault">Change</button>
+            </div>
+
+            <!-- personality multiplier input -->
+            <div style="margin-bottom: 10px;">
+                <div>Personality multiplier</div>
+                <input id="input-mult" type="number" /><button id="btn-mult">Change</button>
             </div>
         </div>
     </div>

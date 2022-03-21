@@ -36,6 +36,7 @@ namespace robot_sim.Controllers
                 resetFlag = Simulator.resetFlag,
                 robotCap = Simulator.robotMax,
                 faultChance = Simulator.faultChance,
+                personalityMultiplier = Simulator.personalityMultiplier,
             };
 
             return Ok(data);
@@ -73,6 +74,14 @@ namespace robot_sim.Controllers
                     if (value >= 0.0 && value <= 100.0) Simulator.faultChance = value;
                 }
 
+            if (template.field == "mult")
+                if (int.TryParse(template.value, out int value))
+                {
+                    if (value < 1) Simulator.personalityMultiplier = 1;
+                    if (value > 100) Simulator.personalityMultiplier = 100;
+                    if (value >= 1 && value <= 100) Simulator.personalityMultiplier = value;
+                }
+
             return Ok();
         }
     }
@@ -86,6 +95,7 @@ namespace robot_sim.Controllers
         public bool resetFlag { get; set; }
         public int robotCap { get; set; }
         public double faultChance { get; set; }
+        public int personalityMultiplier { get; set; }
     }
 
     public class PutTemplate

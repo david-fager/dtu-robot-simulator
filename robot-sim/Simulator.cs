@@ -15,7 +15,8 @@ namespace robot_sim
         public static bool resetFlag = true;
         public static int tickSpeed = 1000; // ms
         public static int robotMax = 5;
-        public static double faultChance = 3; // %
+        public static double faultChance = 3.0; // %
+        public static int personalityMultiplier = 1;
         public static int extraBotsRequested = 0;
 
         public static void StartThread()
@@ -71,7 +72,11 @@ namespace robot_sim
                 // flag 1 = warning, robot needs path recalculation
                 if (robot.statusFlag == 2) robot.expectedPath = calculatePath(robot.position, robot.pickerLocation);
 
-                if (robot.statusFlag < 3) moveRobot(robot);
+                if (robot.statusFlag < 3)
+                {
+                    moveRobot(robot, robot.personality == 1 ? faultChance * personalityMultiplier : faultChance);
+                    setRobotValues(robot, robot.personality == 2 ? faultChance * personalityMultiplier : faultChance);
+                }
 
                 //Debug.WriteLine(robot.ToString()); // For debugging
             }
@@ -85,13 +90,13 @@ namespace robot_sim
 
         private static void addRobot(Position specificPosition = null)
         {
-            var position = specificPosition ?? new Position(random.Next(0, 99), random.Next(10, 49)); // start position
+            var position = specificPosition ?? new Position(random.Next(0, 100), random.Next(10, 50)); // start position
 
             var pickerLocation = pickerLocations[random.Next(0, pickerLocations.Count)]; // random picker location
 
             var expectedPath = calculatePath(position, pickerLocation); // calculate the expected route to picker
 
-            robots.Add(new Robot(idCount++, position, expectedPath, pickerLocation));
+            robots.Add(new Robot(idCount++, position, expectedPath, pickerLocation, random.Next(1, 3)));
         }
 
         private static Queue<Position> calculatePath(Position fromPosition, Position toPosition)
@@ -132,10 +137,10 @@ namespace robot_sim
             return expectedPath;
         }
 
-        private static void moveRobot(Robot robot)
+        private static void moveRobot(Robot robot, double moveFault)
         {
             // correct movement otherwise wrong movement
-            if (random.NextDouble() * 100.0 > faultChance)
+            if (random.NextDouble() * 100.0 >= moveFault)
             {
                 robot.position = robot.expectedPath.Dequeue();
                 if (robot.statusFlag == 2) robot.statusFlag = 0;
@@ -160,6 +165,19 @@ namespace robot_sim
 
                 // if robot is status good, then set warning -- if warning set broken (flag 3)
                 robot.statusFlag = robot.statusFlag == 1 ? 2 : 3;
+            }
+        }
+
+        private static void setRobotValues(Robot robot, double valueFault)
+        {
+            // normal values otherwise wrong values
+            if (random.NextDouble() * 100.0 >= valueFault)
+            {
+                robot.temperature = 89.99999 - random.NextDouble();
+            }
+            else
+            {
+                robot.temperature = 90.0 + random.NextDouble();
             }
         }
     }
