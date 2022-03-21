@@ -132,38 +132,62 @@
 </head>
 <body>
     <div style="display: flex;">
+        <!-- grid (right) -->
         <div class="container" style="background: black; border: 1px solid black; margin: 0 15px 15px 0;">
-            <div class="grid" id="grid" style="display: grid; grid-template-columns: repeat(100, 15px); grid-template-rows: repeat(50, 15px); grid-gap: 1px;">
-            </div>
+            <div class="grid" id="grid" style="display: grid; grid-template-columns: repeat(100, 11px); grid-template-rows: repeat(50, 11px); grid-gap: 1px;"></div>
         </div>
 
+        <!-- data (left) -->
         <div>
-            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Tick:</p><p id="txt-tick" style="display: inline-block; margin: 0;"></p></div>
+            <!-- tick count text -->
             <div>
-                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p><p id="txt-robots" style="display: inline-block; margin: 0;"></p>
+                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Tick:</p>
+                <p id="txt-tick" style="display: inline-block; margin: 0;"></p>
+            </div>
+
+            <!-- robot count text and button -->
+            <div>
+                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p>
+                <p id="txt-robots" style="display: inline-block; margin: 0;"></p>
                 <button id="btn-addRob">Add</button>
             </div>
-            <div><p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Fault chance:</p><p id="txt-fault" style="display: inline-block; margin: 0;"></p></div>
-            <div><button id="btn-reset" style="display: inline-block; margin-top: 1em; margin-bottom: 0;">reset</button></div>
 
+            <!-- fault chance text -->
+            <div>
+                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Fault chance:</p>
+                <p id="txt-fault" style="display: inline-block; margin: 0;"></p>
+            </div>
+
+            <!-- reset button -->
+            <div>
+                <button id="btn-reset" style="display: inline-block; margin-top: 1em; margin-bottom: 0;">reset</button>
+            </div>
+
+            <!-- spacer -->
             <div style="margin: 50px;"></div>
 
+            <!-- tick speed input -->
             <div style="margin-bottom: 10px;">
                 <div>Tick speed</div>
                 <input id="input-tickSpeed" type="number" placeholder="Milliseconds" /><button id="btn-tickSpeed">Change</button>
             </div>
+
+            <!-- robot maximum input -->
             <div style="margin-bottom: 10px;">
                 <div>Robots max</div>
                 <input id="input-robMax" type="number" /><button id="btn-robMax">Change</button>
             </div>
+
+            <!-- fault chance input -->
             <div style="margin-bottom: 10px;">
                 <div>Fault chance (%)</div>
                 <input id="input-fault" type="number" placeholder="Percent" /><button id="btn-fault">Change</button>
             </div>
         </div>
-
     </div>
 
+    <!-- data print -->
+    <div id="listing"></div>
 
 </body>
 </html>

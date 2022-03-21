@@ -54,7 +54,8 @@ namespace robot_sim
 
         private static void tick()
         {
-            //Debug.WriteLine("tick " + ticks++); // For debugging
+            ticks++;
+            //Debug.WriteLine("tick " + ticks); // For debugging
 
             if (robots.Count < robotMax) for (int i = robots.Count; i < robotMax; i++) addRobot();
 
