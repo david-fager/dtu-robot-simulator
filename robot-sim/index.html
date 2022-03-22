@@ -18,8 +18,6 @@
 
             var tickSpeedBtn = document.getElementById("btn-tickSpeed");
             var robMaxBtn = document.getElementById("btn-robMax");
-            var faultBtn = document.getElementById("btn-fault");
-            var multBtn = document.getElementById("btn-mult");
 
             var requestAwaitResponse = false;
 
@@ -27,7 +25,7 @@
 
             loop();
             function loop() {
-                fetch("http://localhost:8000/complete")
+                fetch("http://localhost:8000/web")
                     .then(response => response.json())
                     .then(data => {
                         if (data.tickSpeed <= 250) {
@@ -40,16 +38,12 @@
 
                         document.getElementById("txt-tick").textContent = data.ticks + " (1 tick / " + data.tickSpeed + "ms)";
                         document.getElementById("txt-robots").textContent = data.robots.length + " / " + data.robotCap;
-                        document.getElementById("txt-norm-fault").textContent = data.faultChance + "%";
-                        document.getElementById("txt-pers-fault").textContent = data.faultChance * data.personalityMultiplier + "% (" + data.faultChance + " * " + data.personalityMultiplier + ")";
 
                         resetBtn.disabled = data.resetFlag || requestAwaitResponse;
                         addRobBtn.disabled = requestAwaitResponse;
 
                         tickSpeedBtn.disabled = requestAwaitResponse;
                         robMaxBtn.disabled = requestAwaitResponse;
-                        faultBtn.disabled = requestAwaitResponse;
-                        multBtn.disabled = requestAwaitResponse;
 
                         grid("clear", data.pickers);
                         drawPaths(data.robots);
@@ -63,6 +57,7 @@
                 var grid = document.getElementById("grid");
                 for (let i = 49; i >= 0; i--) {
                     for (let j = 0; j < 100; j++) {
+
                         if (task === "build") {
                             const square = document.createElement("div");
                             square.className = "cell";
@@ -78,14 +73,15 @@
                                 }
                             }
                         }
+
                     }
                 }
             }
 
             function drawPaths(robots) {
                 for (let robot of robots) {
-                    for (let move of robot.expectedPath) {
-                        if (!(move.x === robot.pickerLocation.x && move.y === robot.pickerLocation.y)) {
+                    for (let move of robot.route) {
+                        if (!(move.x === robot.picker.x && move.y === robot.picker.y)) {
                             document.getElementById(move.x + "-" + move.y).style.backgroundColor = "#e6e6ff"; // path color
                         }
                     }
@@ -95,15 +91,15 @@
             function drawRobots(robots) {
                 for (let robot of robots) {
                     if (robot.statusFlag === 4) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#66ff66"; // success color
+                        document.getElementById(robot.currentPosition.x + "-" + robot.currentPosition.y).style.backgroundColor = "#66ff66"; // success color
                     } else if (robot.statusFlag === 3) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ff6666"; // broken color
+                        document.getElementById(robot.currentPosition.x + "-" + robot.currentPosition.y).style.backgroundColor = "#ff6666"; // broken color
                     } else if (robot.statusFlag === 2) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ffff66"; // warning color
+                        document.getElementById(robot.currentPosition.x + "-" + robot.currentPosition.y).style.backgroundColor = "#ffff66"; // warning color
                     } if (robot.statusFlag === 0) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#ff9538"; // reset color
+                        document.getElementById(robot.currentPosition.x + "-" + robot.currentPosition.y).style.backgroundColor = "#ff9538"; // reset color
                     } else if (robot.statusFlag === 1) {
-                        document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#999999"; // normal color
+                        document.getElementById(robot.currentPosition.x + "-" + robot.currentPosition.y).style.backgroundColor = "#999999"; // normal color
                     }
                 }
             }
@@ -151,12 +147,12 @@
 </head>
 <body>
     <div style="display: flex;">
-        <!-- grid (right) -->
+        <!-- grid (left) -->
         <div class="container" style="background: black; border: 1px solid black; margin: 0 15px 15px 0;">
             <div class="grid" id="grid" style="display: grid; grid-template-columns: repeat(100, 11px); grid-template-rows: repeat(50, 11px); grid-gap: 1px;"></div>
         </div>
 
-        <!-- data (left) -->
+        <!-- data (right) -->
         <div>
             <!-- tick count text -->
             <div>
@@ -169,18 +165,6 @@
                 <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p>
                 <p id="txt-robots" style="display: inline-block; margin: 0;"></p>
                 <button id="btn-addRob">Add</button>
-            </div>
-
-            <!-- fault chance text -->
-            <div>
-                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Normal fault chance:</p>
-                <p id="txt-norm-fault" style="display: inline-block; margin: 0;"></p>
-            </div>
-
-            <!-- personality multiplier text -->
-            <div>
-                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Personality fault chance:</p>
-                <p id="txt-pers-fault" style="display: inline-block; margin: 0;"></p>
             </div>
 
             <!-- reset button -->
@@ -201,18 +185,6 @@
             <div style="margin-bottom: 10px;">
                 <div>Robots max</div>
                 <input id="input-robMax" type="number" /><button id="btn-robMax">Change</button>
-            </div>
-
-            <!-- fault chance input -->
-            <div style="margin-bottom: 10px;">
-                <div>Fault chance (%)</div>
-                <input id="input-fault" type="number" placeholder="Percent" /><button id="btn-fault">Change</button>
-            </div>
-
-            <!-- personality multiplier input -->
-            <div style="margin-bottom: 10px;">
-                <div>Personality multiplier</div>
-                <input id="input-mult" type="number" /><button id="btn-mult">Change</button>
             </div>
         </div>
     </div>

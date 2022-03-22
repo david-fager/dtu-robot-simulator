@@ -19,7 +19,7 @@ namespace robot_sim
         public static int robotMax;
         public static int requestedRobots;
 
-        public static double briefFaultChance = 3.0; // %
+        public static double briefFaultChance = 5.0; // %
         public static double permamentFaultChance = 1.0; // %
 
         public static void StartTicking()
@@ -69,7 +69,7 @@ namespace robot_sim
                 if (robot.statusFlag == 0) robot.statusFlag = 1;
 
                 // the robot made it to the picker, flag 3 = success
-                if (robot.position.x == robot.picker.x && robot.position.y == robot.picker.y) robot.statusFlag = 4;
+                if (robot.currentPosition.x == robot.picker.x && robot.currentPosition.y == robot.picker.y) robot.statusFlag = 4;
 
                 // flag 1 = warning, robot needs path recalculation
                 // if (robot.statusFlag == 2) robot.route = PlanRoute(robot.position, robot.picker);
@@ -81,6 +81,8 @@ namespace robot_sim
                     robot.State(random, briefFaultChance);
                 }
             }
+
+            PushEndpoints.PushToEndpoints(ticks, robots);
 
             for (int i = 0; i < requestedRobots; i++) AddRobot();
             requestedRobots = 0;
@@ -95,13 +97,16 @@ namespace robot_sim
 
             var plannedRoute = PlanRoute(startPosition, pickerLocation);
 
-            robots.Add(new Robot(idCount++, startPosition, plannedRoute, pickerLocation));
+            var repairReasons = new List<string> { "unkown", "motor", "battery" }; // TODO: add more?
+            var repairReason = repairReasons[random.Next(repairReasons.Count)];
+
+            robots.Add(new Robot(idCount++, startPosition, plannedRoute, pickerLocation, repairReason));
         }
 
         // calculate the expected route from start position to picker
-        private static Queue<Position> PlanRoute(Position fromPosition, Position toPosition)
+        private static LinkedList<Position> PlanRoute(Position fromPosition, Position toPosition)
         {
-            var expectedPath = new Queue<Position>();
+            var expectedPath = new LinkedList<Position>();
             var currentX = fromPosition.x;
             var currentY = fromPosition.y;
 
@@ -113,18 +118,18 @@ namespace robot_sim
                 if (planningStep % 5 == 0 || planningStep % 9 == 0) movementMode = random.Next(0, 3);
                 if (movementMode == 0) // goes whichever direction is the shortest, typically zigzagging
                 {
-                    if (Math.Abs(toPosition.x - currentX) > Math.Abs(toPosition.y - currentY)) expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
-                    else expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
+                    if (Math.Abs(toPosition.x - currentX) > Math.Abs(toPosition.y - currentY)) expectedPath.AddLast(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
+                    else expectedPath.AddLast(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
                 }
                 if (movementMode == 1) // prefer going in x direction
                 {
-                    if (toPosition.x - currentX != 0) expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
-                    else expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
+                    if (toPosition.x - currentX != 0) expectedPath.AddLast(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
+                    else expectedPath.AddLast(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
                 }
                 if (movementMode == 2) // prefer going in y direction
                 {
-                    if (toPosition.y - currentY != 0) expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
-                    else expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
+                    if (toPosition.y - currentY != 0) expectedPath.AddLast(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
+                    else expectedPath.AddLast(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
                 }
             }
             return expectedPath;

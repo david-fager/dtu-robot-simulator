@@ -13,6 +13,7 @@ namespace robot_sim.Controllers
             _logger = logger;
         }
 
+        // get/show the index.html file
         [HttpGet]
         public ActionResult Get() { return PhysicalFile(Path.Combine(Directory.GetCurrentDirectory(), "index.html"), "text/html"); }
 
@@ -21,22 +22,21 @@ namespace robot_sim.Controllers
         [HttpGet("/raw")]
         public IActionResult GetRaw()
         {
-            var list = new List<RawTemplate>();
-            foreach (var robot in SimulationManager.robots) list.Add(new RawTemplate
-            {
+            return Ok(SimulationManager.robots.Select(robot => new {
                 time = SimulationManager.ticks,
                 robotID = robot.robotID,
-                currentPos = robot.position,
-                //expectedPos = robot.expectedPath.Count > 0 ? robot.expectedPath.Peek() : null,
-                temperature = robot.temperature,
-            });
-            return Ok(list);
+                currentPosition = robot.currentPosition,
+                expectedPosition = robot.expectedPosition,
+                motorTemperature = robot.motorTemperature,
+                batteryResistance = robot.batteryResistance,
+                lastRepairReason = robot.lastRepairReason,
+            }).ToList());
         }
 
-        [HttpGet("/complete")]
+        [HttpGet("/web")]
         public IActionResult GetComplete()
         {
-            return Ok(new GetTemplate()
+            return Ok(new
             {
                 ticks = SimulationManager.ticks,
                 tickSpeed = SimulationManager.tickSpeed,
@@ -44,8 +44,6 @@ namespace robot_sim.Controllers
                 pickers = SimulationManager.pickerLocations,
                 resetFlag = SimulationManager.resetFlag,
                 robotCap = SimulationManager.robotMax,
-                faultChance = SimulationManager.faultChance,
-                personalityMultiplier = SimulationManager.personalityMultiplier,
             });
         }
 
@@ -73,50 +71,13 @@ namespace robot_sim.Controllers
                     if (value >= 1 && value <= 1000) SimulationManager.robotMax = value;
                 }
 
-            if (template.field == "fault")
-                if (double.TryParse(template.value.Replace(".", ","), out double value))
-                {
-                    if (value < 0.0) SimulationManager.faultChance = 0.0;
-                    if (value > 100.0) SimulationManager.faultChance = 100.0;
-                    if (value >= 0.0 && value <= 100.0) SimulationManager.faultChance = value;
-                }
-
-            if (template.field == "mult")
-                if (int.TryParse(template.value, out int value))
-                {
-                    if (value < 1) SimulationManager.personalityMultiplier = 1;
-                    if (value > 100) SimulationManager.personalityMultiplier = 100;
-                    if (value >= 1 && value <= 100) SimulationManager.personalityMultiplier = value;
-                }
-
             return Ok();
         }
-    }
-
-    public class GetTemplate
-    {
-        public int ticks { get; set; }
-        public int tickSpeed { get; set; }
-        public List<Robot> robots { get; set; }
-        public List<Position> pickers { get; set; }
-        public bool resetFlag { get; set; }
-        public int robotCap { get; set; }
-        public double faultChance { get; set; }
-        public int personalityMultiplier { get; set; }
     }
 
     public class PutTemplate
     {
         public string field { get; set; }
         public string value { get; set; }
-    }
-
-    public class RawTemplate
-    {
-        public int time { get; set; }
-        public int robotID { get; set; }
-        public Position currentPos { get; set; }
-        public Position expectedPos { get; set; }
-        public double temperature { get; set; }
     }
 }
