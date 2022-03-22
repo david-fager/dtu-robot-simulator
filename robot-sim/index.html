@@ -23,7 +23,7 @@
 
             var requestAwaitResponse = false;
 
-            buildGrid();
+            grid("build", undefined);
 
             loop();
             function loop() {
@@ -51,34 +51,30 @@
                         faultBtn.disabled = requestAwaitResponse;
                         multBtn.disabled = requestAwaitResponse;
 
-                        clearGrid(data.pickers);
-                        paintPaths(data.robots);
+                        grid("clear", data.pickers);
+                        drawPaths(data.robots);
                         drawRobots(data.robots);
                         getAndDisplayRaw();
                     });
                 window.setTimeout(loop, currentSpeed);
             };
 
-            function buildGrid() {
+            function grid(task, pickers) {
                 var grid = document.getElementById("grid");
                 for (let i = 49; i >= 0; i--) {
                     for (let j = 0; j < 100; j++) {
-                        const square = document.createElement("div");
-                        square.className = "cell";
-                        square.id = j + "-" + i
-                        grid.appendChild(square);
-                    }
-                }
-            }
-
-            function clearGrid(pickers) {
-                for (let i = 49; i >= 0; i--) {
-                    for (let j = 0; j < 100; j++) {
-                        document.getElementById(j + "-" + i).style.backgroundColor = "white";
-                        if (i === 0) {
-                            for (let picker of pickers) {
-                                if (j === picker.x) {
-                                    document.getElementById(j + "-" + i).style.backgroundColor = "#9999ff";
+                        if (task === "build") {
+                            const square = document.createElement("div");
+                            square.className = "cell";
+                            square.id = j + "-" + i
+                            grid.appendChild(square);
+                        } else {
+                            document.getElementById(j + "-" + i).style.backgroundColor = "white";
+                            if (i === 0) {
+                                for (let picker of pickers) {
+                                    if (j === picker.x) {
+                                        document.getElementById(j + "-" + i).style.backgroundColor = "#9999ff"; // picker color
+                                    }
                                 }
                             }
                         }
@@ -86,7 +82,7 @@
                 }
             }
 
-            function paintPaths(robots) {
+            function drawPaths(robots) {
                 for (let robot of robots) {
                     for (let move of robot.expectedPath) {
                         if (!(move.x === robot.pickerLocation.x && move.y === robot.pickerLocation.y)) {

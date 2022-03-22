@@ -37,12 +37,6 @@ namespace robot_sim
                     pickerLocations = new List<Position>();
                     for (int i = 9; i < 99; i = i + 10) pickerLocations.Add(new Position(i, 0));
                     resetFlag = false;
-
-                    // boundary test bots
-                    //addRobot(new Position(0, 0));
-                    //addRobot(new Position(99, 49));
-                    //addRobot(new Position(0, 49));
-                    //addRobot(new Position(99, 0));
                 }
 
                 sw.Reset();
@@ -107,33 +101,26 @@ namespace robot_sim
 
             var mode = 0;
             var count = 0;
-            var mod = 5;
-            while (currentX != toPosition.x || currentY != toPosition.y)
+            while (!(currentX == toPosition.x && currentY == toPosition.y))
             {
-                if (count++ % mod == 0) mode = random.Next(0, 3);
-
-                // direct movement
-                if (mode == 0 || mode == 1)
+                count++;
+                if (count % 5 == 0 || count % 8 == 0) mode = random.Next(0, 3);
+                if (mode == 0) // zigzag
                 {
                     if (Math.Abs(toPosition.x - currentX) > Math.Abs(toPosition.y - currentY)) expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
                     else expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
                 }
-
-                // prefer x
-                if (mode == 2)
+                if (mode == 1) // prefer x
                 {
                     if (toPosition.x - currentX != 0) expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
                     else expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
                 }
-
-                // prefer y
-                if (mode == 3)
+                if (mode == 2) // prefer y
                 {
                     if (toPosition.y - currentY != 0) expectedPath.Enqueue(toPosition.y - currentY > 0 ? new Position(currentX, ++currentY) : new Position(currentX, --currentY));
                     else expectedPath.Enqueue(toPosition.x - currentX > 0 ? new Position(++currentX, currentY) : new Position(--currentX, currentY));
                 }
             }
-
             return expectedPath;
         }
 

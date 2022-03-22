@@ -4,11 +4,11 @@ namespace robot_sim.Controllers
 {
     [ApiController]
     [Route("")]
-    public class MainController : ControllerBase
+    public class RequestController : ControllerBase
     {
-        private readonly ILogger<MainController> _logger;
+        private readonly ILogger<RequestController> _logger;
 
-        public MainController(ILogger<MainController> logger)
+        public RequestController(ILogger<RequestController> logger)
         {
             _logger = logger;
         }
@@ -27,7 +27,7 @@ namespace robot_sim.Controllers
                 time = Simulator.ticks,
                 robotID = robot.robotID,
                 currentPos = robot.position,
-                expectedPos = robot.expectedPath.Count > 0 ? robot.expectedPath.Peek() : null,
+                //expectedPos = robot.expectedPath.Count > 0 ? robot.expectedPath.Peek() : null,
                 temperature = robot.temperature,
             });
             return Ok(list);
