@@ -26,8 +26,8 @@ namespace robot_sim.Controllers
             {
                 time = Simulator.ticks,
                 robotID = robot.robotID,
-                position = robot.position,
-                expectedPath = robot.expectedPath,
+                currentPos = robot.position,
+                expectedPos = robot.expectedPath.Count > 0 ? robot.expectedPath.Peek() : null,
                 temperature = robot.temperature,
             });
             return Ok(list);
@@ -115,8 +115,8 @@ namespace robot_sim.Controllers
     {
         public int time { get; set; }
         public int robotID { get; set; }
-        public Position position { get; set; }
-        public Queue<Position> expectedPath { get; set; }
+        public Position currentPos { get; set; }
+        public Position expectedPos { get; set; }
         public double temperature { get; set; }
     }
 }
