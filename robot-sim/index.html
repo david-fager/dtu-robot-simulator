@@ -51,13 +51,10 @@
                         faultBtn.disabled = requestAwaitResponse;
                         multBtn.disabled = requestAwaitResponse;
 
-                        var elmnt = document.getElementById("listing");
-                        while (elmnt.firstChild) {
-                            elmnt.removeChild(elmnt.firstChild);
-                        }
-
                         clearGrid(data.pickers);
+                        paintPaths(data.robots);
                         drawRobots(data.robots);
+                        getAndDisplayRaw();
                     });
                 window.setTimeout(loop, currentSpeed);
             };
@@ -89,14 +86,18 @@
                 }
             }
 
-            function drawRobots(robots) {
+            function paintPaths(robots) {
                 for (let robot of robots) {
                     for (let move of robot.expectedPath) {
                         if (!(move.x === robot.pickerLocation.x && move.y === robot.pickerLocation.y)) {
                             document.getElementById(move.x + "-" + move.y).style.backgroundColor = "#e6e6ff"; // path color
                         }
                     }
+                }
+            }
 
+            function drawRobots(robots) {
+                for (let robot of robots) {
                     if (robot.statusFlag === 4) {
                         document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#66ff66"; // success color
                     } else if (robot.statusFlag === 3) {
@@ -108,13 +109,26 @@
                     } else if (robot.statusFlag === 1) {
                         document.getElementById(robot.position.x + "-" + robot.position.y).style.backgroundColor = "#999999"; // normal color
                     }
-
-                    var rbt = robot;
-                    rbt.expectedPath = [];
-                    var elmnt = document.createElement("div");
-                    elmnt.textContent = JSON.stringify(rbt);
-                    document.getElementById("listing").appendChild(elmnt);
                 }
+            }
+
+            function getAndDisplayRaw() {
+                var elmnt = document.getElementById("listing");
+                while (elmnt.firstChild) {
+                    elmnt.removeChild(elmnt.firstChild);
+                }
+
+                fetch("http://localhost:8000/raw")
+                    .then(response => response.json())
+                    .then(data => {
+                        var dat = data;
+                        for (let rbt of dat) {
+                            rbt.expectedPath = [];
+                            var nelmnt = document.createElement("div");
+                            nelmnt.textContent = JSON.stringify(rbt);
+                            document.getElementById("listing").appendChild(nelmnt);
+                        }
+                    });
             }
 
             resetBtn.onclick = () => editValue(resetBtn, "reset", "");
@@ -168,7 +182,7 @@
                 <p id="txt-norm-fault" style="display: inline-block; margin: 0;"></p>
             </div>
 
-            <!-- fault chance text -->
+            <!-- personality multiplier text -->
             <div>
                 <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Personality fault chance:</p>
                 <p id="txt-pers-fault" style="display: inline-block; margin: 0;"></p>
@@ -209,6 +223,7 @@
     </div>
 
     <!-- data print -->
+    <a href="http://localhost:8000/raw" style="margin-bottom: 10px;">http://localhost:8000/raw</a>
     <div id="listing"></div>
 
 </body>

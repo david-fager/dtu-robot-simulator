@@ -21,13 +21,22 @@ namespace robot_sim.Controllers
         [HttpGet("/raw")]
         public IActionResult GetRaw()
         {
-            throw new NotImplementedException();
+            var list = new List<RawTemplate>();
+            foreach (var robot in Simulator.robots) list.Add(new RawTemplate
+            {
+                time = Simulator.ticks,
+                robotID = robot.robotID,
+                position = robot.position,
+                expectedPath = robot.expectedPath,
+                temperature = robot.temperature,
+            });
+            return Ok(list);
         }
 
         [HttpGet("/complete")]
         public IActionResult GetComplete()
         {
-            var data = new GetTemplate()
+            return Ok(new GetTemplate()
             {
                 ticks = Simulator.ticks,
                 tickSpeed = Simulator.tickSpeed,
@@ -37,9 +46,7 @@ namespace robot_sim.Controllers
                 robotCap = Simulator.robotMax,
                 faultChance = Simulator.faultChance,
                 personalityMultiplier = Simulator.personalityMultiplier,
-            };
-
-            return Ok(data);
+            });
         }
 
         [HttpPut("/edit")]
@@ -102,5 +109,14 @@ namespace robot_sim.Controllers
     {
         public string field { get; set; }
         public string value { get; set; }
+    }
+
+    public class RawTemplate
+    {
+        public int time { get; set; }
+        public int robotID { get; set; }
+        public Position position { get; set; }
+        public Queue<Position> expectedPath { get; set; }
+        public double temperature { get; set; }
     }
 }
