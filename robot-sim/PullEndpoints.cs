@@ -4,11 +4,11 @@ namespace robot_sim.Controllers
 {
     [ApiController]
     [Route("")]
-    public class RequestController : ControllerBase
+    public class PullEndpoints : ControllerBase
     {
-        private readonly ILogger<RequestController> _logger;
+        private readonly ILogger<PullEndpoints> _logger;
 
-        public RequestController(ILogger<RequestController> logger)
+        public PullEndpoints(ILogger<PullEndpoints> logger)
         {
             _logger = logger;
         }
@@ -22,9 +22,9 @@ namespace robot_sim.Controllers
         public IActionResult GetRaw()
         {
             var list = new List<RawTemplate>();
-            foreach (var robot in Simulator.robots) list.Add(new RawTemplate
+            foreach (var robot in SimulationManager.robots) list.Add(new RawTemplate
             {
-                time = Simulator.ticks,
+                time = SimulationManager.ticks,
                 robotID = robot.robotID,
                 currentPos = robot.position,
                 //expectedPos = robot.expectedPath.Count > 0 ? robot.expectedPath.Peek() : null,
@@ -38,14 +38,14 @@ namespace robot_sim.Controllers
         {
             return Ok(new GetTemplate()
             {
-                ticks = Simulator.ticks,
-                tickSpeed = Simulator.tickSpeed,
-                robots = Simulator.robots,
-                pickers = Simulator.pickerLocations,
-                resetFlag = Simulator.resetFlag,
-                robotCap = Simulator.robotMax,
-                faultChance = Simulator.faultChance,
-                personalityMultiplier = Simulator.personalityMultiplier,
+                ticks = SimulationManager.ticks,
+                tickSpeed = SimulationManager.tickSpeed,
+                robots = SimulationManager.robots,
+                pickers = SimulationManager.pickerLocations,
+                resetFlag = SimulationManager.resetFlag,
+                robotCap = SimulationManager.robotMax,
+                faultChance = SimulationManager.faultChance,
+                personalityMultiplier = SimulationManager.personalityMultiplier,
             });
         }
 
@@ -54,39 +54,39 @@ namespace robot_sim.Controllers
         {
             System.Diagnostics.Debug.WriteLine("Received: {" + template.field + ", " + template.value + "}");
 
-            if (template.field == "reset") Simulator.resetFlag = true;
-            if (template.field == "robot") Simulator.extraBotsRequested++;
+            if (template.field == "reset") SimulationManager.resetFlag = true;
+            if (template.field == "robot") SimulationManager.requestedRobots++;
 
             if (template.field == "speed")
                 if (int.TryParse(template.value, out int value))
                 {
-                    if (value < 100) Simulator.tickSpeed = 100;
-                    if (value > 60000) Simulator.tickSpeed = 60000;
-                    if (value >= 100 && value <= 60000) Simulator.tickSpeed = value;
+                    if (value < 100) SimulationManager.tickSpeed = 100;
+                    if (value > 60000) SimulationManager.tickSpeed = 60000;
+                    if (value >= 100 && value <= 60000) SimulationManager.tickSpeed = value;
                 }
 
             if (template.field == "max")
                 if (int.TryParse(template.value, out int value))
                 {
-                    if (value < 1) Simulator.robotMax = 1;
-                    if (value > 1000) Simulator.robotMax = 1000;
-                    if (value >= 1 && value <= 1000) Simulator.robotMax = value;
+                    if (value < 1) SimulationManager.robotMax = 1;
+                    if (value > 1000) SimulationManager.robotMax = 1000;
+                    if (value >= 1 && value <= 1000) SimulationManager.robotMax = value;
                 }
 
             if (template.field == "fault")
                 if (double.TryParse(template.value.Replace(".", ","), out double value))
                 {
-                    if (value < 0.0) Simulator.faultChance = 0.0;
-                    if (value > 100.0) Simulator.faultChance = 100.0;
-                    if (value >= 0.0 && value <= 100.0) Simulator.faultChance = value;
+                    if (value < 0.0) SimulationManager.faultChance = 0.0;
+                    if (value > 100.0) SimulationManager.faultChance = 100.0;
+                    if (value >= 0.0 && value <= 100.0) SimulationManager.faultChance = value;
                 }
 
             if (template.field == "mult")
                 if (int.TryParse(template.value, out int value))
                 {
-                    if (value < 1) Simulator.personalityMultiplier = 1;
-                    if (value > 100) Simulator.personalityMultiplier = 100;
-                    if (value >= 1 && value <= 100) Simulator.personalityMultiplier = value;
+                    if (value < 1) SimulationManager.personalityMultiplier = 1;
+                    if (value > 100) SimulationManager.personalityMultiplier = 100;
+                    if (value >= 1 && value <= 100) SimulationManager.personalityMultiplier = value;
                 }
 
             return Ok();
