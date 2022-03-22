@@ -76,7 +76,9 @@ namespace robot_sim
 
                 if (robot.statusFlag < 3)
                 {
-                    if (random.NextDouble() * 100.0 <= permamentFaultChance) robot.personality = (Personality)random.Next(1, 12);
+                    if (robot.personality == Personality.Normal && random.NextDouble() * 100.0 <= permamentFaultChance)
+                        robot.personality = (Personality)random.Next(1, 12);
+
                     robot.Move(random, briefFaultChance);
                     robot.State(random, briefFaultChance);
                 }
@@ -97,10 +99,12 @@ namespace robot_sim
 
             var plannedRoute = PlanRoute(startPosition, pickerLocation);
 
+            var startResistance = random.NextDouble() * 70;
+
             var repairReasons = new List<string> { "unkown", "motor", "battery" }; // TODO: add more?
             var repairReason = repairReasons[random.Next(repairReasons.Count)];
 
-            robots.Add(new Robot(idCount++, startPosition, plannedRoute, pickerLocation, repairReason));
+            robots.Add(new Robot(idCount++, startPosition, plannedRoute, pickerLocation, startResistance, repairReason));
         }
 
         // calculate the expected route from start position to picker

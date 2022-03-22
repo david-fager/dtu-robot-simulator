@@ -13,25 +13,27 @@
         public int statusFlag { get; set; }
         public string lastRepairReason { get; set; }
 
-        public Robot(int robotID, Position currentPosition, LinkedList<Position> route, Position picker, string lastRepairReason)
+        public Robot(int robotID, Position currentPosition, LinkedList<Position> route, Position picker, double batteryResistance, string lastRepairReason)
         {
             this.robotID = robotID;
             this.currentPosition = expectedPosition = currentPosition;
             this.route = route;
             this.picker = picker;
+            this.batteryResistance = batteryResistance;
             this.lastRepairReason = lastRepairReason;
             personality = Personality.Normal;
-            motorTemperature = 0.0;
-            batteryResistance = 0.0;
+            motorTemperature = 20.0;
             statusFlag = 0;
         }
 
         public void Move(Random random, double briefFaultChance)
         {
             expectedPosition = route.First(); // robot is moving, so expected is next route position
-            var personalities = new List<Personality> { Personality.Movement, Personality.MovementMotor, Personality.MovementMotorBattery, Personality.MovementBattery, Personality.FullStop, Personality.FullStopMotor, Personality.FullStopMotorBattery, Personality.FullStopBattery };
+            var movementPersonalities = new List<Personality> { Personality.Movement, Personality.MovementMotor, Personality.MovementMotorBattery, Personality.MovementBattery };
+            var fullStopPersonalities = new List<Personality> { Personality.FullStop, Personality.FullStopMotor, Personality.FullStopMotorBattery, Personality.FullStopBattery };
             var briefDiversion = random.NextDouble() * 100.0 <= briefFaultChance;
-            if (briefDiversion || personalities.Contains(personality))
+            var diversionType = briefDiversion ? random.Next(2) : -1;
+            if (diversionType == 0 || movementPersonalities.Contains(personality))
             {
                 var currentX = currentPosition.x;
                 var currentY = currentPosition.y;
@@ -45,6 +47,10 @@
 
                 if (briefDiversion) route.AddFirst(new Position(currentX, currentY));
             }
+            else if (diversionType == 1 || fullStopPersonalities.Contains(personality))
+            {
+                statusFlag = 2;
+            }
             else
             {
                 currentPosition = route.First();
@@ -55,15 +61,42 @@
 
         public void State(Random random, double briefFaultChance)
         {
-            var personalities = new List<Personality> { Personality.MovementMotor, Personality.MovementMotorBattery, Personality.MovementBattery, Personality.Motor, Personality.MotorBattery, Personality.Battery, Personality.FullStopMotor, Personality.FullStopMotorBattery, Personality.FullStopBattery };
-            if (random.NextDouble() * 100.0 <= briefFaultChance || personalities.Contains(personality))
+            var motorPersonalities = new List<Personality> { Personality.Motor, Personality.MovementMotor, Personality.MovementMotorBattery, Personality.MotorBattery, Personality.FullStopMotor, Personality.FullStopMotorBattery };
+            var batteryPersonalities = new List<Personality> { Personality.Battery, Personality.MovementBattery, Personality.MovementMotorBattery, Personality.MotorBattery, Personality.FullStopBattery, Personality.FullStopMotorBattery };
+            var briefDiversion = random.NextDouble() * 100.0 <= briefFaultChance;
+            var diversionType = briefDiversion ? random.Next(2) : -1;
+            if (diversionType == 0 || motorPersonalities.Contains(personality))
             {
-                // TODO: implement
+                var lowerLimit = 80.0;
+                if (personality == Personality.Motor || personality == Personality.MotorBattery) lowerLimit = 90.0;
+                motorTemperature = MotorTempChange(random, motorTemperature, lowerLimit, 100.0);
             }
-            else
+            
+            if (diversionType == 1 || batteryPersonalities.Contains(personality))
             {
-                // TODO: implement
+                var lowerLimit = 0.9;
+                if (personality == Personality.Battery || personality == Personality.MotorBattery) lowerLimit = 1.0;
+                if (batteryResistance < lowerLimit) batteryResistance += lowerLimit - batteryResistance; // jump quickly over limit
+                else batteryResistance += random.NextDouble() * 0.01;
             }
+
+            if (personality == Personality.Normal)
+            {
+                motorTemperature = MotorTempChange(random, motorTemperature, 70.0, 80.0);
+
+                batteryResistance += random.NextDouble() * 0.01; // worst case takes 100 steps to go above 1
+                if (batteryResistance >= 1) personality = Personality.Battery;
+            }
+        }
+
+        private double MotorTempChange(Random random, double current, double minChange, double maxChange)
+        {
+            var suggestion = random.NextDouble();
+            var temp = random.Next(2) == 0 ? current + suggestion : current - suggestion;
+            if (temp <= minChange) current += suggestion + minChange / current;
+            else if (temp >= maxChange) current -= suggestion;
+            else current = temp;
+            return current;
         }
 
         public string ToString()
@@ -73,7 +106,7 @@
                 + " Position: (" + currentPosition.x + ", " + currentPosition.y + ")"
                 + " Route length: " + route.Count
                 + " Picker: (" + picker.x + ", " + picker.y + ")"
-                + " Motor temp: " + motorTemperature
+                + " Motor temp (C): " + motorTemperature
                 + " Battery resistance: " + batteryResistance
                 + " Status: " + statusFlag;
         }

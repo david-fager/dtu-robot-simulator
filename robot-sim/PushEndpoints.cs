@@ -18,49 +18,45 @@ namespace robot_sim
 
         private static void PushFull(HttpClient client, int time, List<Robot> robots)
         {
-            // TODO: pick data
-            client.PostAsJsonAsync("http://localhost:8000/full", new { foo = "bar" });
+            var data = robots.Select(robot => new
+            {
+                time = time,
+                robotID = robot.robotID,
+                currentPosition = robot.currentPosition,
+                expectedPosition = robot.expectedPosition,
+                motorTemperature = (robot.motorTemperature * 9 / 5 + 32), // convert to fahrenheit
+                batteryResistance = robot.batteryResistance,
+                lastRepairReason = robot.lastRepairReason,
+            }).ToList();
+            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/full", data.FirstOrDefault());
+            else client.PostAsJsonAsync("http://localhost:8000/full", data);
         }
 
         private static void PushMovement(HttpClient client, int time, List<Robot> robots)
         {
-            // TODO: pick data
-            client.PostAsJsonAsync("http://localhost:8000/movement", new { foo = "bar" });
+            var data = robots.Select(robot => new
+            {
+                time = time,
+                robotID = robot.robotID,
+                currentPosition = robot.currentPosition,
+                expectedPosition = robot.expectedPosition,
+            }).ToList();
+            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/full", data.FirstOrDefault());
+            else client.PostAsJsonAsync("http://localhost:8000/full", data);
         }
 
         private static void PushSensor(HttpClient client, int time, List<Robot> robots)
         {
-            // TODO: pick data
-            client.PostAsJsonAsync("http://localhost:8000/sensor", new { foo = "bar" });
-        }
-
-
-        private class FullData
-        {
-            public int time { get; set; }
-            public int robotID { get; set; }
-            public Position currentPosition { get; set; }
-            public Position expectedPosition { get; set; }
-            public double motorTemperature { get; set; }
-            public double batteryResistance { get; set; }
-            public string lastRepairReason { get; set; }
-        }
-
-        private class MovementData
-        {
-            public int time { get; set; }
-            public int robotID { get; set; }
-            public Position currentPosition { get; set; }
-            public Position expectedPosition { get; set; }
-        }
-
-        private class SensorData
-        {
-            public int time { get; set; }
-            public int robotID { get; set; }
-            public double motorTemperature { get; set; }
-            public double batteryResistance { get; set; }
-            public string lastRepairReason { get; set; }
+            var data = robots.Select(robot => new
+            {
+                time = time,
+                robotID = robot.robotID,
+                motorTemperature = (robot.motorTemperature * 9 / 5 + 32), // convert to fahrenheit
+                batteryResistance = robot.batteryResistance,
+                lastRepairReason = robot.lastRepairReason,
+            }).ToList();
+            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/full", data.FirstOrDefault());
+            else client.PostAsJsonAsync("http://localhost:8000/full", data);
         }
     }
 }

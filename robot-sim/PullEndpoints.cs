@@ -27,7 +27,7 @@ namespace robot_sim.Controllers
                 robotID = robot.robotID,
                 currentPosition = robot.currentPosition,
                 expectedPosition = robot.expectedPosition,
-                motorTemperature = robot.motorTemperature,
+                motorTemperature = (robot.motorTemperature * 9 / 5 + 32), // convert to fahrenheit
                 batteryResistance = robot.batteryResistance,
                 lastRepairReason = robot.lastRepairReason,
             }).ToList());
