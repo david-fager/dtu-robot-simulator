@@ -99,7 +99,7 @@ namespace robot_sim
 
             var plannedRoute = PlanRoute(startPosition, pickerLocation);
 
-            var startResistance = random.NextDouble() * 70;
+            var startResistance = random.NextDouble() * 0.7;
 
             var repairReasons = new List<string> { "unkown", "motor", "battery" }; // TODO: add more?
             var repairReason = repairReasons[random.Next(repairReasons.Count)];
