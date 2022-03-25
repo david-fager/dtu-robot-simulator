@@ -61,6 +61,7 @@
 
         public void State(Random random, double briefFaultChance)
         {
+            var increaseBatteryNormally = false;
             var motorPersonalities = new List<Personality> { Personality.Motor, Personality.MovementMotor, Personality.MovementMotorBattery, Personality.MotorBattery, Personality.FullStopMotor, Personality.FullStopMotorBattery };
             var batteryPersonalities = new List<Personality> { Personality.Battery, Personality.MovementBattery, Personality.MovementMotorBattery, Personality.MotorBattery, Personality.FullStopBattery, Personality.FullStopMotorBattery };
             var briefDiversion = random.NextDouble() * 100.0 <= briefFaultChance;
@@ -70,21 +71,23 @@
                 var lowerLimit = 80.0;
                 if (personality == Personality.Motor || personality == Personality.MotorBattery) lowerLimit = 90.0;
                 motorTemperature = MotorTempChange(random, motorTemperature, lowerLimit, 100.0);
+                increaseBatteryNormally = true;
             }
             
             if (diversionType == 1 || batteryPersonalities.Contains(personality))
             {
                 var lowerLimit = 0.9;
                 if (personality == Personality.Battery || personality == Personality.MotorBattery) lowerLimit = 1.0;
-                if (batteryResistance < lowerLimit) batteryResistance += lowerLimit - batteryResistance; // jump quickly over limit
-                else batteryResistance += random.NextDouble() * 0.01;
+                if (batteryResistance >= lowerLimit / 2) batteryResistance += lowerLimit - batteryResistance; // jump quickly over limit
+                else if (batteryResistance < lowerLimit / 2) batteryResistance += (lowerLimit - batteryResistance) / 2; // jump quickly over limit
+                increaseBatteryNormally = true;
             }
 
-            if (personality == Personality.Normal)
+            if (personality == Personality.Normal || increaseBatteryNormally)
             {
-                motorTemperature = MotorTempChange(random, motorTemperature, 70.0, 80.0);
+                if (!increaseBatteryNormally) motorTemperature = MotorTempChange(random, motorTemperature, 70.0, 80.0);
 
-                batteryResistance += random.NextDouble() * 0.01; // worst case takes 100 steps to go above 1
+                batteryResistance += random.NextDouble() * 0.0075; // worst case takes 133 steps to go above 1
                 if (batteryResistance >= 1) personality = Personality.Battery;
             }
         }

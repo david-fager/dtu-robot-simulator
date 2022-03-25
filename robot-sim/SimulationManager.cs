@@ -82,6 +82,8 @@ namespace robot_sim
                     robot.Move(random, briefFaultChance);
                     robot.State(random, briefFaultChance);
                 }
+
+                Debug.WriteLine(robot.robotID + " p: " + robot.personality.ToString());
             }
 
             PushEndpoints.PushToEndpoints(ticks, robots);
@@ -99,7 +101,7 @@ namespace robot_sim
 
             var plannedRoute = PlanRoute(startPosition, pickerLocation);
 
-            var startResistance = random.NextDouble() * 0.7;
+            var startResistance = random.NextDouble() * 0.5;
 
             var repairReasons = new List<string> { "unkown", "motor", "battery" }; // TODO: add more?
             var repairReason = repairReasons[random.Next(repairReasons.Count)];
