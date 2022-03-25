@@ -108,6 +108,14 @@ namespace robot_sim.Controllers
                     if (value >= 0.0001 && value <= 0.25) SimulationManager.batteryChangeRate = value;
                 }
 
+            if (template.field == "set")
+                if (int.TryParse(template.value, out int value))
+                {
+                    if (value < 0) SimulationManager.setPersonality = 0;
+                    if (value > 11) SimulationManager.setPersonality = 11;
+                    if (value >= 0 && value <= 11) SimulationManager.setPersonality = value;
+                }
+
             return Ok();
         }
 

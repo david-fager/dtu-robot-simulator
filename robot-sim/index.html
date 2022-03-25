@@ -43,6 +43,9 @@
             var batInp = document.getElementById("inp-bat");
             var batBtn = document.getElementById("btn-bat");
             batBtn.onclick = () => editValue(batBtn, "bat", batInp);
+            var setInp = document.getElementById("inp-set");
+            var setBtn = document.getElementById("btn-set");
+            setBtn.onclick = () => editValue(setBtn, "set", setInp);
 
             // methods
             grid("build", undefined);
@@ -68,7 +71,7 @@
                         batTxt.textContent = data.resistanceRate + " (++)";
 
                         resBtn.disabled = data.resetFlag || requestAwaitResponse;
-                        addBtn.disabled = ticBtn.disabled = maxBtn.disabled = divBtn.disabled = perBtn.disabled = motBtn.disabled = batBtn.disabled = requestAwaitResponse;
+                        addBtn.disabled = ticBtn.disabled = maxBtn.disabled = divBtn.disabled = perBtn.disabled = motBtn.disabled = batBtn.disabled = setBtn.disabled = requestAwaitResponse;
 
                         grid("clear", data.pickers);
                         drawPaths(data.robots);
@@ -280,7 +283,7 @@
 
                 <!-- set personality input -->
                 <div style="margin-bottom: 10px;">
-                    <div>Set first robot's personality' (0-12)</div>
+                    <div>Set first robot's personality' (0-11)</div>
                     <input id="inp-set" type="number" placeholder="Integer" /><button id="btn-set">Change</button>
                 </div>
 
@@ -291,9 +294,9 @@
 
     <!-- data print -->
     <p style="margin: 0;">Post points for Siddhi (<a href="http://localhost:8000/formats" style="margin-bottom: 10px;">data format</a>):</p>
-    Siddhi movement data: <a href="http://localhost:8000/format/movement" style="margin-bottom: 10px;">http://localhost:8000/movement</a><br />
-    Siddhi sensor data: <a href="http://localhost:8000/format/sensor" style="margin-bottom: 10px;">http://localhost:8000/sensor</a><br />
-    Siddhi full data: <a href="http://localhost:8000/format/full" style="margin-bottom: 10px;">http://localhost:8000/full</a><br />
+    Siddhi movement data: <a href="http://localhost:8000/movement" style="margin-bottom: 10px;">http://localhost:8000/movement</a><br />
+    Siddhi sensor data: <a href="http://localhost:8000/sensor" style="margin-bottom: 10px;">http://localhost:8000/sensor</a><br />
+    Siddhi full data: <a href="http://localhost:8000/full" style="margin-bottom: 10px;">http://localhost:8000/full</a><br />
     <div id="listing"></div>
 
 </body>
