@@ -21,6 +21,9 @@ namespace robot_sim
 
         public static double briefFaultChance = 5.0; // %
         public static double permamentFaultChance = 1.0; // %
+        public static double motorChangeRate = 1;
+        public static double batteryChangeRate = 0.0075; // worst case takes 133 steps to go above 1
+        public static int setPersonality = -1;
 
         public static void StartTicking()
         {
@@ -76,14 +79,20 @@ namespace robot_sim
 
                 if (robot.statusFlag < 3)
                 {
-                    if (robot.personality == Personality.Normal && random.NextDouble() * 100.0 <= permamentFaultChance)
-                        robot.personality = (Personality)random.Next(1, 12);
+                    if (setPersonality >= 0 && setPersonality <= 12)
+                    {
+                        robot.personality = (Personality)setPersonality;
+                        setPersonality = -1;
+                    }
+                    else
+                    {
+                        if (robot.personality == Personality.Normal && random.NextDouble() * 100.0 <= permamentFaultChance)
+                            robot.personality = (Personality)random.Next(1, 12);
+                    }
 
                     robot.Move(random, briefFaultChance);
-                    robot.State(random, briefFaultChance);
+                    robot.State(random, briefFaultChance, motorChangeRate, batteryChangeRate);
                 }
-
-                Debug.WriteLine(robot.robotID + " p: " + robot.personality.ToString());
             }
 
             PushEndpoints.PushToEndpoints(ticks, robots);

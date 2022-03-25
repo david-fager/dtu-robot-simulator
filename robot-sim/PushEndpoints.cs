@@ -41,8 +41,8 @@ namespace robot_sim
                 currentPosition = robot.currentPosition,
                 expectedPosition = robot.expectedPosition,
             }).ToList();
-            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/full", data.FirstOrDefault());
-            else client.PostAsJsonAsync("http://localhost:8000/full", data);
+            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/movement", data.FirstOrDefault());
+            else client.PostAsJsonAsync("http://localhost:8000/movement", data);
         }
 
         private static void PushSensor(HttpClient client, int time, List<Robot> robots)
@@ -55,8 +55,8 @@ namespace robot_sim
                 batteryResistance = robot.batteryResistance,
                 lastRepairReason = robot.lastRepairReason,
             }).ToList();
-            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/full", data.FirstOrDefault());
-            else client.PostAsJsonAsync("http://localhost:8000/full", data);
+            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/sensor", data.FirstOrDefault());
+            else client.PostAsJsonAsync("http://localhost:8000/sensor", data);
         }
     }
 }

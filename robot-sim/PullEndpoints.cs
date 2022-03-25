@@ -23,13 +23,14 @@ namespace robot_sim.Controllers
         public IActionResult GetRaw()
         {
             return Ok(SimulationManager.robots.Select(robot => new {
-                time = SimulationManager.ticks,
-                robotID = robot.robotID,
-                currentPosition = robot.currentPosition,
-                expectedPosition = robot.expectedPosition,
-                motorTemperature = (robot.motorTemperature * 9 / 5 + 32), // convert to fahrenheit
-                batteryResistance = robot.batteryResistance,
-                lastRepairReason = robot.lastRepairReason,
+                tick = SimulationManager.ticks,
+                id = robot.robotID,
+                pos = robot.currentPosition,
+                expected = robot.expectedPosition,
+                temp = (robot.motorTemperature * 9 / 5 + 32), // convert to fahrenheit
+                resistance = robot.batteryResistance,
+                personality = robot.personality.ToString(),
+                repairReason = robot.lastRepairReason,
             }).ToList());
         }
 
@@ -41,9 +42,13 @@ namespace robot_sim.Controllers
                 ticks = SimulationManager.ticks,
                 tickSpeed = SimulationManager.tickSpeed,
                 robots = SimulationManager.robots,
+                robotCap = SimulationManager.robotMax,
+                divChance = SimulationManager.briefFaultChance,
+                perChance = SimulationManager.permamentFaultChance,
+                motorRate = SimulationManager.motorChangeRate,
+                resistanceRate = SimulationManager.batteryChangeRate,
                 pickers = SimulationManager.pickerLocations,
                 resetFlag = SimulationManager.resetFlag,
-                robotCap = SimulationManager.robotMax,
             });
         }
 
@@ -52,10 +57,10 @@ namespace robot_sim.Controllers
         {
             System.Diagnostics.Debug.WriteLine("Received: {" + template.field + ", " + template.value + "}");
 
-            if (template.field == "reset") SimulationManager.resetFlag = true;
-            if (template.field == "robot") SimulationManager.requestedRobots++;
+            if (template.field == "res") SimulationManager.resetFlag = true;
+            if (template.field == "add") SimulationManager.requestedRobots++;
 
-            if (template.field == "speed")
+            if (template.field == "tic")
                 if (int.TryParse(template.value, out int value))
                 {
                     if (value < 100) SimulationManager.tickSpeed = 100;
@@ -71,7 +76,54 @@ namespace robot_sim.Controllers
                     if (value >= 1 && value <= 1000) SimulationManager.robotMax = value;
                 }
 
+            if (template.field == "div")
+                if (double.TryParse(template.value.Replace(".", ","), out double value))
+                {
+                    if (value < 0.0) SimulationManager.briefFaultChance = 0.0;
+                    if (value > 100.0) SimulationManager.briefFaultChance = 100.0;
+                    if (value >= 0.0 && value <= 100.0) SimulationManager.briefFaultChance = value;
+                }
+
+            if (template.field == "per")
+                if (double.TryParse(template.value.Replace(".", ","), out double value))
+                {
+                    if (value < 0.0) SimulationManager.permamentFaultChance = 0.0;
+                    if (value > 100.0) SimulationManager.permamentFaultChance = 100.0;
+                    if (value >= 0.0 && value <= 100.0) SimulationManager.permamentFaultChance = value;
+                }
+
+            if (template.field == "mot")
+                if (double.TryParse(template.value.Replace(".", ","), out double value))
+                {
+                    if (value < 0.05) SimulationManager.motorChangeRate = 0.05;
+                    if (value > 25.0) SimulationManager.motorChangeRate = 25.0;
+                    if (value >= 0.05 && value <= 25.0) SimulationManager.motorChangeRate = value;
+                }
+
+            if (template.field == "bat")
+                if (double.TryParse(template.value.Replace(".", ","), out double value))
+                {
+                    if (value < 0.0001) SimulationManager.batteryChangeRate = 0.0001;
+                    if (value > 0.25) SimulationManager.batteryChangeRate = 0.25;
+                    if (value >= 0.0001 && value <= 0.25) SimulationManager.batteryChangeRate = value;
+                }
+
             return Ok();
+        }
+
+        [HttpGet("/formats")]
+        public IActionResult Formats()
+        {
+            return Ok(new
+            {
+                time = 1,
+                robotID = 1,
+                currentPosition = new Position(0, 1),
+                expectedPosition = new Position(1, 0),
+                motorTemperature = 0.1,
+                batteryResistance = 0.1,
+                lastRepairReason = "",
+            });
         }
     }
 

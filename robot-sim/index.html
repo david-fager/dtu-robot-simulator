@@ -11,16 +11,40 @@
     </style>
     <script>
         window.onload = function () {
+            // variables
             var currentSpeed = 1000;
-
-            var resetBtn = document.getElementById("btn-reset");
-            var addRobBtn = document.getElementById("btn-addRob");
-
-            var tickSpeedBtn = document.getElementById("btn-tickSpeed");
-            var robMaxBtn = document.getElementById("btn-robMax");
-
             var requestAwaitResponse = false;
 
+            var addBtn = document.getElementById("btn-add");
+            addBtn.onclick = () => editValue("", "add", undefined);
+            var resBtn = document.getElementById("btn-res");
+            resBtn.onclick = () => editValue(resBtn, "res", undefined);
+            var ticTxt = document.getElementById("txt-tic");
+            var ticInp = document.getElementById("inp-tic");
+            var ticBtn = document.getElementById("btn-tic");
+            ticBtn.onclick = () => editValue(ticBtn, "tic", ticInp);
+            var maxTxt = document.getElementById("txt-max");
+            var maxInp = document.getElementById("inp-max");
+            var maxBtn = document.getElementById("btn-max");
+            maxBtn.onclick = () => editValue(maxBtn, "max", maxInp);
+            var divTxt = document.getElementById("txt-div");
+            var divInp = document.getElementById("inp-div");
+            var divBtn = document.getElementById("btn-div");
+            divBtn.onclick = () => editValue(divBtn, "div", divInp);
+            var perTxt = document.getElementById("txt-per");
+            var perInp = document.getElementById("inp-per");
+            var perBtn = document.getElementById("btn-per");
+            perBtn.onclick = () => editValue(perBtn, "per", perInp);
+            var motTxt = document.getElementById("txt-mot");
+            var motInp = document.getElementById("inp-mot");
+            var motBtn = document.getElementById("btn-mot");
+            motBtn.onclick = () => editValue(motBtn, "mot", motInp);
+            var batTxt = document.getElementById("txt-bat");
+            var batInp = document.getElementById("inp-bat");
+            var batBtn = document.getElementById("btn-bat");
+            batBtn.onclick = () => editValue(batBtn, "bat", batInp);
+
+            // methods
             grid("build", undefined);
 
             loop();
@@ -36,14 +60,15 @@
                             currentSpeed = data.tickSpeed;
                         }
 
-                        document.getElementById("txt-tick").textContent = data.ticks + " (1 tick / " + data.tickSpeed + "ms)";
-                        document.getElementById("txt-robots").textContent = data.robots.length + " / " + data.robotCap;
+                        ticTxt.textContent = data.ticks + " (1 tick / " + data.tickSpeed + "ms)";
+                        maxTxt.textContent = data.robots.length + " / " + data.robotCap;
+                        divTxt.textContent = data.divChance + " %";
+                        perTxt.textContent = data.perChance + " %";
+                        motTxt.textContent = data.motorRate + " (++--)";
+                        batTxt.textContent = data.resistanceRate + " (++)";
 
-                        resetBtn.disabled = data.resetFlag || requestAwaitResponse;
-                        addRobBtn.disabled = requestAwaitResponse;
-
-                        tickSpeedBtn.disabled = requestAwaitResponse;
-                        robMaxBtn.disabled = requestAwaitResponse;
+                        resBtn.disabled = data.resetFlag || requestAwaitResponse;
+                        addBtn.disabled = ticBtn.disabled = maxBtn.disabled = divBtn.disabled = perBtn.disabled = motBtn.disabled = batBtn.disabled = requestAwaitResponse;
 
                         grid("clear", data.pickers);
                         drawPaths(data.robots);
@@ -122,16 +147,15 @@
                     });
             }
 
-            resetBtn.onclick = () => editValue(resetBtn, "reset", "");
-            addRobBtn.onclick = () => editValue("", "robot", "");
-
-            tickSpeedBtn.onclick = () => editValue(tickSpeedBtn, "speed", document.getElementById("input-tickSpeed").value);
-            robMaxBtn.onclick = () => editValue(robMaxBtn, "max", document.getElementById("input-robMax").value);
-            faultBtn.onclick = () => editValue(faultBtn, "fault", document.getElementById("input-fault").value);
-            multBtn.onclick = () => editValue(multBtn, "mult", document.getElementById("input-mult").value);
-            function editValue(object, field, value) {
-                if (object !== "") {
-                    object.disabled = true;
+            function editValue(btnObj, field, inpObj) {
+                var value;
+                if (btnObj !== "") {
+                    btnObj.disabled = true;
+                }
+                if (inpObj !== undefined) {
+                    value = inpObj.value;
+                } else {
+                    value = "";
                 }
                 requestAwaitResponse = true;
                 fetch("http://localhost:8000/edit", {
@@ -140,57 +164,136 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ field, value }),
-                }).then(() => requestAwaitResponse = false);
+                }).then(() => {
+                    if (inpObj !== undefined) {
+                        inpObj.value = "";
+                    }
+                    requestAwaitResponse = false;
+                });
             }
         };
     </script>
 </head>
 <body>
+
     <div style="display: flex;">
+
         <!-- grid (left) -->
-        <div class="container" style="background: black; border: 1px solid black; margin: 0 15px 15px 0;">
-            <div class="grid" id="grid" style="display: grid; grid-template-columns: repeat(100, 11px); grid-template-rows: repeat(50, 11px); grid-gap: 1px;"></div>
+        <div>
+            <div class="container" style="background: black; border: 1px solid black; margin: 0 15px 15px 0;">
+                <div class="grid" id="grid" style="display: grid; grid-template-columns: repeat(100, 11px); grid-template-rows: repeat(50, 11px); grid-gap: 1px;"></div>
+            </div>
         </div>
+
 
         <!-- data (right) -->
         <div>
-            <!-- tick count text -->
-            <div>
-                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Tick:</p>
-                <p id="txt-tick" style="display: inline-block; margin: 0;"></p>
-            </div>
 
-            <!-- robot count text and button -->
+            <!-- data top -->
             <div>
-                <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p>
-                <p id="txt-robots" style="display: inline-block; margin: 0;"></p>
-                <button id="btn-addRob">Add</button>
-            </div>
 
-            <!-- reset button -->
-            <div>
-                <button id="btn-reset" style="display: inline-block; margin-top: 1em; margin-bottom: 0;">reset</button>
+                <!-- tick count speed text -->
+                <div>
+                    <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Tick:</p>
+                    <p id="txt-tic" style="display: inline-block; margin: 0;"></p>
+                </div>
+
+                <!-- robot count max text -->
+                <div>
+                    <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Robots:</p>
+                    <p id="txt-max" style="display: inline-block; margin: 0;"></p>
+                    <button id="btn-add">Add</button>
+                </div>
+
+                <!-- diversion text -->
+                <div>
+                    <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Diversion:</p>
+                    <p id="txt-div" style="display: inline-block; margin: 0;"></p>
+                </div>
+
+                <!-- personality text -->
+                <div>
+                    <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Personality:</p>
+                    <p id="txt-per" style="display: inline-block; margin: 0;"></p>
+                </div>
+
+                <!-- temp rate text -->
+                <div>
+                    <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Motor temp. rate:</p>
+                    <p id="txt-mot" style="display: inline-block; margin: 0;"></p>
+                </div>
+
+                <!-- resistance rate text -->
+                <div>
+                    <p style="font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 0;">Resistance inc. rate:</p>
+                    <p id="txt-bat" style="display: inline-block; margin: 0;"></p>
+                </div>
+
+                <!-- reset button -->
+                <div>
+                    <button id="btn-res" style="display: inline-block; margin-top: 1em; margin-bottom: 0;">Reset</button>
+                </div>
+
             </div>
 
             <!-- spacer -->
             <div style="margin: 50px;"></div>
 
-            <!-- tick speed input -->
-            <div style="margin-bottom: 10px;">
-                <div>Tick speed</div>
-                <input id="input-tickSpeed" type="number" placeholder="Milliseconds" /><button id="btn-tickSpeed">Change</button>
-            </div>
+            <!-- data change fields -->
+            <div>
 
-            <!-- robot maximum input -->
-            <div style="margin-bottom: 10px;">
-                <div>Robots max</div>
-                <input id="input-robMax" type="number" /><button id="btn-robMax">Change</button>
+                <!-- tick speed input -->
+                <div style="margin-bottom: 10px;">
+                    <div>Tick speed (100-60000)</div>
+                    <input id="inp-tic" type="number" placeholder="Milliseconds" /><button id="btn-tic">Change</button>
+                </div>
+
+                <!-- robot maximum input -->
+                <div style="margin-bottom: 10px;">
+                    <div>Robots max (1-1000)</div>
+                    <input id="inp-max" type="number" placeholder="Integer" /><button id="btn-max">Change</button>
+                </div>
+
+                <!-- diversion chance input -->
+                <div style="margin-bottom: 10px;">
+                    <div>Chance of diversion (0-100)</div>
+                    <input id="inp-div" type="number" placeholder="Decimal (%)" /><button id="btn-div">Change</button>
+                </div>
+
+                <!-- personality chance input -->
+                <div style="margin-bottom: 10px;">
+                    <div>Chance of personality (0-100)</div>
+                    <input id="inp-per" type="number" placeholder="Decimal (%)" /><button id="btn-per">Change</button>
+                </div>
+
+                <!-- motor rate input -->
+                <div style="margin-bottom: 10px;">
+                    <div>Motor temp max change rate (0.05-25)</div>
+                    <input id="inp-mot" type="number" placeholder="Decimal" /><button id="btn-mot">Change</button>
+                </div>
+
+                <!-- battery rate input -->
+                <div style="margin-bottom: 10px;">
+                    <div>Battery resistance max change rate (0.0001-0.25)</div>
+                    <input id="inp-bat" type="number" placeholder="Decimal" /><button id="btn-bat">Change</button>
+                </div>
+
+                <!-- set personality input -->
+                <div style="margin-bottom: 10px;">
+                    <div>Set first robot's personality' (0-12)</div>
+                    <input id="inp-set" type="number" placeholder="Integer" /><button id="btn-set">Change</button>
+                </div>
+
             </div>
         </div>
+
     </div>
 
     <!-- data print -->
-    <a href="http://localhost:8000/raw" style="margin-bottom: 10px;">http://localhost:8000/raw</a>
+    <p style="margin: 0;">Post points for Siddhi (<a href="http://localhost:8000/formats" style="margin-bottom: 10px;">data format</a>):</p>
+    Siddhi movement data: <a href="http://localhost:8000/format/movement" style="margin-bottom: 10px;">http://localhost:8000/movement</a><br />
+    Siddhi sensor data: <a href="http://localhost:8000/format/sensor" style="margin-bottom: 10px;">http://localhost:8000/sensor</a><br />
+    Siddhi full data: <a href="http://localhost:8000/format/full" style="margin-bottom: 10px;">http://localhost:8000/full</a><br />
     <div id="listing"></div>
 
 </body>

@@ -59,7 +59,7 @@
             }
         }
 
-        public void State(Random random, double briefFaultChance)
+        public void State(Random random, double briefFaultChance, double motorRate, double batteryRate)
         {
             var motorPersonalities = new List<Personality> { Personality.Motor, Personality.MovementMotor, Personality.MovementMotorBattery, Personality.MotorBattery, Personality.FullStopMotor, Personality.FullStopMotorBattery };
             var batteryPersonalities = new List<Personality> { Personality.Battery, Personality.MovementBattery, Personality.MovementMotorBattery, Personality.MotorBattery, Personality.FullStopBattery, Personality.FullStopMotorBattery };
@@ -68,7 +68,7 @@
             {
                 var lowerLimit = 80.0;
                 if (personality == Personality.Motor || personality == Personality.MotorBattery) lowerLimit = 90.0;
-                motorTemperature = MotorTempChange(random, motorTemperature, lowerLimit, 100.0);
+                motorTemperature = MotorTempChange(random, motorTemperature, lowerLimit, 100.0, motorRate);
             }
             
             if (batteryPersonalities.Contains(personality))
@@ -77,21 +77,21 @@
                 if (personality == Personality.Battery || personality == Personality.MotorBattery) lowerLimit = 1.0;
                 if (batteryResistance >= lowerLimit / 2) batteryResistance += lowerLimit - batteryResistance; // jump quickly over limit
                 else if (batteryResistance < lowerLimit / 2) batteryResistance += (lowerLimit - batteryResistance) / 2; // jump quickly over limit
-                batteryResistance += random.NextDouble() * 0.0075;
+                batteryResistance += random.NextDouble() * batteryRate;
             }
 
             if (personality == Personality.Normal)
             {
-                motorTemperature = MotorTempChange(random, motorTemperature, 70.0, 80.0);
+                motorTemperature = MotorTempChange(random, motorTemperature, 70.0, 80.0, motorRate);
 
-                batteryResistance += random.NextDouble() * 0.0075; // worst case takes 133 steps to go above 1
+                batteryResistance += random.NextDouble() * batteryRate;
                 if (batteryResistance >= 1) personality = Personality.Battery;
             }
         }
 
-        private double MotorTempChange(Random random, double current, double minChange, double maxChange)
+        private double MotorTempChange(Random random, double current, double minChange, double maxChange, double rate)
         {
-            var suggestion = random.NextDouble();
+            var suggestion = random.NextDouble() * rate;
             var temp = random.Next(2) == 0 ? current + suggestion : current - suggestion;
             if (temp <= minChange) current += suggestion + minChange / current;
             else if (temp >= maxChange) current -= suggestion;
