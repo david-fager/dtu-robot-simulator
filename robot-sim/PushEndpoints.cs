@@ -28,8 +28,10 @@ namespace robot_sim
                 batteryResistance = robot.batteryResistance,
                 lastRepairReason = robot.lastRepairReason,
             }).ToList();
-            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/full", data.FirstOrDefault());
-            else client.PostAsJsonAsync("http://localhost:8000/full", data);
+            var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8000/full");
+            if (robots.Count == 1) request.Content = new StringContent(JsonConvert.SerializeObject(data.FirstOrDefault()), System.Text.Encoding.UTF8, "application/json");
+            else request.Content = new StringContent(JsonConvert.SerializeObject(data), System.Text.Encoding.UTF8, "application/json");
+            client.Send(request);
         }
 
         private static void PushMovement(HttpClient client, int time, List<Robot> robots)
@@ -41,8 +43,10 @@ namespace robot_sim
                 currentPosition = robot.currentPosition,
                 expectedPosition = robot.expectedPosition,
             }).ToList();
-            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/movement", data.FirstOrDefault());
-            else client.PostAsJsonAsync("http://localhost:8000/movement", data);
+            var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8000/movement");
+            if (robots.Count == 1) request.Content = new StringContent(JsonConvert.SerializeObject(data.FirstOrDefault()), System.Text.Encoding.UTF8, "application/json");
+            else request.Content = new StringContent(JsonConvert.SerializeObject(data), System.Text.Encoding.UTF8, "application/json");
+            client.Send(request);
         }
 
         private static void PushSensor(HttpClient client, int time, List<Robot> robots)
@@ -55,8 +59,10 @@ namespace robot_sim
                 batteryResistance = robot.batteryResistance,
                 lastRepairReason = robot.lastRepairReason,
             }).ToList();
-            if (robots.Count == 1) client.PostAsJsonAsync("http://localhost:8000/sensor", data.FirstOrDefault());
-            else client.PostAsJsonAsync("http://localhost:8000/sensor", data);
+            var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8000/sensor");
+            if (robots.Count == 1) request.Content = new StringContent(JsonConvert.SerializeObject(data.FirstOrDefault()), System.Text.Encoding.UTF8, "application/json");
+            else request.Content = new StringContent(JsonConvert.SerializeObject(data), System.Text.Encoding.UTF8, "application/json");
+            client.Send(request);
         }
     }
 }
