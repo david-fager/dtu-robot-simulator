@@ -63,9 +63,9 @@ namespace robot_sim.Controllers
             if (template.field == "tic")
                 if (int.TryParse(template.value, out int value))
                 {
-                    if (value < 100) SimulationManager.tickSpeed = 100;
+                    if (value < 250) SimulationManager.tickSpeed = 250;
                     if (value > 60000) SimulationManager.tickSpeed = 60000;
-                    if (value >= 100 && value <= 60000) SimulationManager.tickSpeed = value;
+                    if (value >= 250 && value <= 60000) SimulationManager.tickSpeed = value;
                 }
 
             if (template.field == "max")

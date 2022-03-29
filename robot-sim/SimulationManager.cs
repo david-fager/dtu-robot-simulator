@@ -95,7 +95,7 @@ namespace robot_sim
                 }
             }
 
-            PushEndpoints.PushToEndpoints(ticks, robots);
+            PushEndpoints.PushToEndpoints(tickSpeed, ticks, robots);
 
             for (int i = 0; i < requestedRobots; i++) AddRobot();
             requestedRobots = 0;
