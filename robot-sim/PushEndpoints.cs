@@ -9,15 +9,15 @@ namespace robot_sim
 
         public static void PushToEndpoints(int tickSpeed, int time, List<Robot> robots)
         {
-            if (CheckConnection(tickSpeed))
-            {
+            //if (CheckConnection(tickSpeed))
+            //{
                 using (var client = new HttpClient())
                 {
                     PushFull(client, time, robots);
                     PushMovement(client, time, robots);
                     PushSensor(client, time, robots);
                 }
-            }
+            //}
         }
 
         private static bool CheckConnection(int tickSpeed)
