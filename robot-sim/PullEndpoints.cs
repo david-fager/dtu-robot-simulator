@@ -119,6 +119,12 @@ namespace robot_sim.Controllers
             return Ok();
         }
 
+        [HttpDelete("/kill")]
+        public void KillRobot(int robotID)
+        {
+            // TODO add this functionality
+        }
+
         [HttpGet("/formats")]
         public IActionResult Formats()
         {

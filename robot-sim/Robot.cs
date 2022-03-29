@@ -12,6 +12,7 @@
         public double batteryResistance { get; set; }
         public int statusFlag { get; set; }
         public string lastRepairReason { get; set; }
+        public int killSwitch { get; set; }
 
         public Robot(int robotID, Position currentPosition, LinkedList<Position> route, Position picker, double batteryResistance, string lastRepairReason)
         {
@@ -24,6 +25,7 @@
             personality = Personality.Normal;
             motorTemperature = 20.0;
             statusFlag = 0;
+            killSwitch = 10;
         }
 
         public void Move(Random random, double briefFaultChance)
@@ -57,6 +59,9 @@
                 route.RemoveFirst();
                 statusFlag = 1;
             }
+
+            if (movementPersonalities.Contains(personality) || fullStopPersonalities.Contains(personality))
+                if (--killSwitch < 1) statusFlag = 3;
         }
 
         public void State(Random random, double briefFaultChance, double motorRate, double batteryRate)
@@ -80,10 +85,11 @@
                 batteryResistance += random.NextDouble() * batteryRate;
             }
 
-            if (personality == Personality.Normal)
-            {
+            if (personality == Personality.Normal || batteryPersonalities.Contains(personality))
                 motorTemperature = MotorTempChange(random, motorTemperature, 70.0, 80.0, motorRate);
 
+            if (personality == Personality.Normal)
+            {
                 batteryResistance += random.NextDouble() * batteryRate;
                 if (batteryResistance >= 1) personality = Personality.Battery;
             }
