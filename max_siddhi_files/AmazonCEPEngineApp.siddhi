@@ -1,0 +1,81 @@
+@App:name("AmazonCEPEngineApp")
+
+@App:description("CEP engine for Amazon robitcs fulfillment center")
+
+@source(type='http', receiver.url='http://0.0.0.0:8080/sensor', @map(type='json', @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
+define stream MonitoringDataStream (time int, robotId string, tempKelv float, res float);
+
+@source(type='file',
+mode='LINE',
+tailing='true',
+file.uri='file:\\vagrant\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
+@map(type='json'))
+define stream dbStream (robotId string, repReason string);
+
+@sink(type='log', prefix='temperature status:')
+define stream TempOutStream(startTime int, robotId string, initialTemp double, finalTemp double, lastRepReason string);
+
+@sink(type='log', prefix='resistance status:')
+define stream ResOutStream(startTime int, robotId string, initialRes int, finalRes float, lastRepReason string);
+
+@primaryKey('robotId')
+@index('robotId')
+define table robotLastRepTable (robotId string, lastRepReason string);
+
+/***************************************** TEMPERATURE EPA's *****************************************/
+
+/** translation of fahrenheit to celcius **/
+@info(name='translate-fahrenheit-to-celc')
+from MonitoringDataStream
+select time, robotId, math:round(math:floor(tempKelv-32.0)) / 1.8 as tempCelc, res
+insert into TempTranslationStream;
+
+
+/** filter of temperature above threshold and projection to a subset of the attributes **/
+@info(name='filter-high-temperature')
+from TempTranslationStream[tempCelc >= 90]
+select time, robotId, tempCelc
+insert into HighTempStream;
+
+/** pattern recognition of recieved event with too high temperature with new events still too high **/
+@info(name='pattern-high-temperature')
+from every( e1=HighTempStream ) -> e2=TempTranslationStream[ e1.robotId == robotId and (e1.tempCelc) <= tempCelc ]
+    within 30 seconds
+select e2.time as startTime, e1.robotId, e1.tempCelc as initialTemp, e2.tempCelc as finalTemp
+insert into AlertHighTempStream;
+
+/***************************************** RESISTANCE EPA's *****************************************/
+
+/** filter of resistance above threshold and projection to a subset of the attributes **/
+@info(name='filter-high-resistance')
+from TempTranslationStream[res >= 1]
+select time, robotId, math:round(res) as roundedRes
+insert into HighResStream;
+
+/** pattern recognition of recieved event with too high resistance with new events still too high **/
+@info(name='pattern-high-resistance')
+from every( e1=HighResStream ) -> e2=TempTranslationStream[e1.robotId == robotId and (e1.roundedRes) <= res ]
+    within 30 seconds
+select e2.time as startTime, e1.robotId, e1.roundedRes as initialRes, e2.res as finalRes
+insert into AlertHighResStream;
+
+/***************************************** In-memory table *****************************************/
+
+/** insert into table from file source **/
+from dbStream
+select robotId, repReason as lastRepReason
+update or insert into robotLastRepTable
+set robotLastRepTable.lastRepReason = lastRepReason
+on robotLastRepTable.robotId == robotId;
+
+/** enrich temp and resistance events with last rep reason attribute **/
+
+from AlertHighTempStream as t join robotLastRepTable as r
+    on t.robotId == r.robotId
+select t.startTime, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
+insert into TempOutStream;
+
+from AlertHighResStream as t join robotLastRepTable as r
+    on t.robotId == r.robotId
+select t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
+insert into dbOutStream;

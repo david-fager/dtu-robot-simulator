@@ -1,0 +1,4 @@
+{"robotId":"0","repReason":"motor stop"}
+{"robotId":"1","repReason":"batteries low"}
+{"robotId":"2","repReason":"software patch"}
+{"robotId":"3","repReason":"motor stop"}
