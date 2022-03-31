@@ -15,7 +15,11 @@ Add robot_rep_data to the folder.
 
 
 ############## deployment ##############
+- change the environment variables accordingly in tooling.sh/bat
+
 - start siddhi app
+
+- change the endpoint port of dataMonitoringStream to 8001
 
 - make sure that the file io source path to the robot_rep_data file is the absolute path on your machine.
 Dont remove file:\. It is an URI and has to begin with the protocol for fetching the resource.
