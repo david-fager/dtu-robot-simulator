@@ -16,7 +16,7 @@ define stream dbStream (robotId string, repReason string);
 define stream TempOutStream(startTime int, robotId string, initialTemp double, finalTemp double, lastRepReason string);
 
 @sink(type='log', prefix='resistance status:')
-define stream ResOutStream(startTime int, robotId string, initialRes int, finalRes float, lastRepReason string);
+define stream ResOutStream(startTime int, robotId string, initialRes float, finalRes float, lastRepReason string);
 
 @primaryKey('robotId')
 @index('robotId')
