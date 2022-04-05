@@ -78,4 +78,4 @@ insert into TempOutStream;
 from AlertHighResStream as t join robotLastRepTable as r
     on t.robotId == r.robotId
 select t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
-insert into dbOutStream;
+insert into ResOutStream;
