@@ -5,7 +5,7 @@ namespace robot_sim
 {
     public static class PushEndpoints
     {
-        public static string BaseURL = "http://localhost:8001";
+        public static string BaseURL = "http://localhost:8888";
 
         public static void PushToEndpoints(int tickSpeed, int time, List<Robot> robots)
         {
@@ -53,7 +53,7 @@ namespace robot_sim
                     //lastRepairReason = robot.lastRepairReason,
                 };
 
-                var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8001/full");
+                var request = new HttpRequestMessage(HttpMethod.Post, BaseURL + "/full");
                 request.Content = new StringContent(JsonConvert.SerializeObject(data), System.Text.Encoding.UTF8, "application/json");
                 client.Send(request);
             }
