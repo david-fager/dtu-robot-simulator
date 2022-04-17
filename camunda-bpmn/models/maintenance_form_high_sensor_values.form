@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "components": [
+    {
+      "values": [
+        {
+          "label": "Motor maintenance area",
+          "value": "motor"
+        },
+        {
+          "label": "Battery maintenance area",
+          "value": "battery"
+        },
+        {
+          "label": "none",
+          "value": "Do not conduct maintenance"
+        }
+      ],
+      "label": "Select maintenance area",
+      "type": "select",
+      "id": "Field_1ysc720",
+      "key": "setMaintenanceArea",
+      "validate": {
+        "required": true
+      }
+    }
+  ],
+  "type": "default",
+  "id": "maintenance_area_form",
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.16"
+}

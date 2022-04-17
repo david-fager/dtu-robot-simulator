@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1k4l7sc" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1k4l7sc" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
   <bpmn:collaboration id="Collaboration_04g242z">
     <bpmn:participant id="Participant_0z9re1z" name="Siddhi" />
     <bpmn:participant id="Participant_18i9bok" name="Robot position monitor" processRef="Process_0l040se" />
@@ -9,18 +9,18 @@
     <bpmn:messageFlow id="Flow_162ugjw" name="position and expected position" sourceRef="Participant_1m0i51w" targetRef="Participant_0z9re1z" />
     <bpmn:messageFlow id="Flow_0botg2y" name="Robot stoped sending positions" sourceRef="Participant_0z9re1z" targetRef="Event_1gzl5wm" />
   </bpmn:collaboration>
-  <bpmn:process id="Process_0l040se" isExecutable="false">
+  <bpmn:process id="Process_0l040se" isExecutable="true">
     <bpmn:laneSet id="LaneSet_1742n4e">
       <bpmn:lane id="Lane_0g4x184" name="System">
         <bpmn:flowNodeRef>Event_146y47d</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_0ixv928</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Event_1gr8kko</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Event_1gzl5wm</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Activity_0sr2vff</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_09gob6c</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Activity_1a297va</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Activity_1bdl1jj</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Event_0tucwp1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_1gzl5wm</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_0e6ki9d" name="Employee">
         <bpmn:flowNodeRef>Activity_0elsf8h</bpmn:flowNodeRef>
@@ -49,19 +49,21 @@
       <bpmn:outgoing>Flow_1vkgfko</bpmn:outgoing>
       <bpmn:outgoing>Flow_061yxi0</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_00vvjz9" name="Robot needs to be moved manually" sourceRef="Gateway_09gob6c" targetRef="Activity_0elsf8h" />
+    <bpmn:sequenceFlow id="Flow_00vvjz9" name="Robot needs to be moved manually" sourceRef="Gateway_09gob6c" targetRef="Activity_0elsf8h">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Robot needs to be moved manually</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_0exmy40" sourceRef="Activity_0elsf8h" targetRef="Activity_1vn8td9" />
-    <bpmn:sequenceFlow id="Flow_08rdwp7" name="Robot can move by it self" sourceRef="Gateway_09gob6c" targetRef="Activity_1a297va" />
+    <bpmn:sequenceFlow id="Flow_08rdwp7" name="Robot can move by it self" sourceRef="Gateway_09gob6c" targetRef="Activity_1a297va">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Robot can move by it self</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_0x32am3" sourceRef="Activity_1bdl1jj" targetRef="Gateway_0ixv928" />
-    <bpmn:sequenceFlow id="Flow_1vkgfko" name="no maintenance needed" sourceRef="Gateway_0ixv928" targetRef="Event_146y47d" />
+    <bpmn:sequenceFlow id="Flow_1vkgfko" name="no maintenance needed" sourceRef="Gateway_0ixv928" targetRef="Event_146y47d">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">no maintenance needed</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_0mjlb44" sourceRef="Activity_0sr2vff" targetRef="Gateway_09gob6c" />
-    <bpmn:startEvent id="Event_1gr8kko">
+    <bpmn:startEvent id="Event_1gr8kko" name="msgWrongPosition">
       <bpmn:outgoing>Flow_033c5mz</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_07d0qua" />
-    </bpmn:startEvent>
-    <bpmn:startEvent id="Event_1gzl5wm">
-      <bpmn:outgoing>Flow_09sizkw</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_1cz47b2" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_07d0qua" messageRef="Message_1b28xcb" />
     </bpmn:startEvent>
     <bpmn:task id="Activity_0sr2vff" name="Determine how to move robot">
       <bpmn:incoming>Flow_033c5mz</bpmn:incoming>
@@ -107,9 +109,17 @@
     <bpmn:endEvent id="Event_0tucwp1" name="robot arrived at maintenace">
       <bpmn:incoming>Flow_061yxi0</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_061yxi0" name="robot drives to maintenance" sourceRef="Gateway_0ixv928" targetRef="Event_0tucwp1" />
+    <bpmn:sequenceFlow id="Flow_061yxi0" name="robot drives to maintenance" sourceRef="Gateway_0ixv928" targetRef="Event_0tucwp1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">robot drives to maintenance</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:task id="Activity_13uv6c2" name="Model determine maintenance type - depends on how programming team implemented sending the sensor/position data" />
+    <bpmn:startEvent id="Event_1gzl5wm" name="msgMissingPositionUpdate">
+      <bpmn:outgoing>Flow_09sizkw</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1cz47b2" messageRef="Message_0rosnxj" />
+    </bpmn:startEvent>
   </bpmn:process>
+  <bpmn:message id="Message_1b28xcb" name="Message_1vsqk5g" />
+  <bpmn:message id="Message_0rosnxj" name="Message_0h3tuaa" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_04g242z">
       <bpmndi:BPMNShape id="Participant_067hda9_di" bpmnElement="Participant_0z9re1z" isHorizontal="true">
@@ -176,8 +186,8 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_09sizkw_di" bpmnElement="Flow_09sizkw">
-        <di:waypoint x="400" y="548" />
-        <di:waypoint x="400" y="670" />
+        <di:waypoint x="370" y="568" />
+        <di:waypoint x="370" y="670" />
         <di:waypoint x="909" y="670" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_033c5mz_di" bpmnElement="Flow_033c5mz">
@@ -199,11 +209,8 @@
       <bpmndi:BPMNShape id="Event_1lqool4_di" bpmnElement="Event_1gr8kko">
         <dc:Bounds x="382" y="442" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="234" y="415" width="72" height="14" />
+          <dc:Bounds x="376" y="486" width="87" height="27" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1j8vos8_di" bpmnElement="Event_1gzl5wm">
-        <dc:Bounds x="382" y="512" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1kzuvhh_di" bpmnElement="Activity_0sr2vff">
         <dc:Bounds x="490" y="420" width="100" height="80" />
@@ -247,6 +254,12 @@
       <bpmndi:BPMNShape id="Activity_13uv6c2_di" bpmnElement="Activity_13uv6c2">
         <dc:Bounds x="1050" y="670" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1j8vos8_di" bpmnElement="Event_1gzl5wm">
+        <dc:Bounds x="352" y="532" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="258" y="536" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_1g3gt9x_di" bpmnElement="Participant_1m0i51w" isHorizontal="true">
         <dc:Bounds x="160" y="80" width="1420" height="60" />
       </bpmndi:BPMNShape>
@@ -289,11 +302,10 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0botg2y_di" bpmnElement="Flow_0botg2y">
-        <di:waypoint x="310" y="263" />
-        <di:waypoint x="310" y="530" />
-        <di:waypoint x="382" y="530" />
+        <di:waypoint x="370" y="263" />
+        <di:waypoint x="370" y="532" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="307" y="286" width="86" height="27" />
+          <dc:Bounds x="277" y="286" width="86" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>

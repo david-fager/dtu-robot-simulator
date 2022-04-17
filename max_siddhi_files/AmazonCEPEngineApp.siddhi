@@ -1,26 +1,59 @@
 @App:name("AmazonCEPEngineApp")
 
+
 @App:description("CEP engine for Amazon robitcs fulfillment center")
 
-@source(type='http', receiver.url='http://0.0.0.0:8080/sensor', @map(type='json', @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
+@source(type='http', receiver.url='http://0.0.0.0:8001/sensor', @map(type='json', @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
 define stream MonitoringDataStream (time int, robotId string, tempKelv float, res float);
 
 @source(type='file',
 mode='LINE',
 tailing='true',
-file.uri='file:\\vagrant\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
+file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
 @map(type='json'))
 define stream dbStream (robotId string, repReason string);
 
 @sink(type='log', prefix='temperature status:')
-define stream TempOutStream(startTime int, robotId string, initialTemp double, finalTemp double, lastRepReason string);
+@sink(type='http',
+    publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
+        headers = "'Host:127.0.0.1'", 
+        @map(type='json', @payload("""{"messageName": "{{messageName}}",
+            "processVariables": {
+                "motor_temp": {
+                    "value": "-"
+                },
+                "battery_internal_resistance ": {
+                    "value": "High"
+                }
+            }
+        }
+        """)))
+define stream TempOutStream(startTime int, messageName string , robotId string, initialTemp double, finalTemp double, lastRepReason string);
 
 @sink(type='log', prefix='resistance status:')
-define stream ResOutStream(startTime int, robotId string, initialRes int, finalRes float, lastRepReason string);
+@sink(type='http',
+    publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
+        headers = "'Host:127.0.0.1'", 
+        @map(type='json', @payload("""{"messageName": "{{messageName}}",
+            "processVariables": {
+                "motor_temp": {
+                    "value": "High"
+                },
+                "battery_internal_resistance ": {
+                    "value": "-"
+                }
+            }
+        }
+        """)))
+define stream ResOutStream(startTime int, messageName string, robotId string, initialRes int, finalRes float, lastRepReason string);
 
 @primaryKey('robotId')
 @index('robotId')
 define table robotLastRepTable (robotId string, lastRepReason string);
+
+@source(type='http', receiver.url="http://127.0.0.1:8001/camunda-stream", @map(type='json'))
+@sink(type='log' , prefix='Robot maintenance area: ') 
+define stream robotMaintenanceStream(maintenanceArea string);
 
 /***************************************** TEMPERATURE EPA's *****************************************/
 
@@ -68,14 +101,14 @@ update or insert into robotLastRepTable
 set robotLastRepTable.lastRepReason = lastRepReason
 on robotLastRepTable.robotId == robotId;
 
-/** enrich temp and resistance events with last rep reason attribute **/
+/** enrich temp and rmesistance events with last rep reason attribute **/
 
 from AlertHighTempStream as t join robotLastRepTable as r
     on t.robotId == r.robotId
-select t.startTime, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
+select t.startTime, 'msgSensorData' as messageName, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
 insert into TempOutStream;
 
 from AlertHighResStream as t join robotLastRepTable as r
     on t.robotId == r.robotId
-select t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
+select t.startTime, 'msgSensorData' as messageName, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
 insert into ResOutStream;
