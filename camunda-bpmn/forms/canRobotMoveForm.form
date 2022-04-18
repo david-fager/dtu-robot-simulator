@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "components": [
+    {
+      "label": "Can robot move by itself?",
+      "type": "textfield",
+      "id": "Field_1jblfw8",
+      "key": "canRobotMove",
+      "validate": {
+        "required": true
+      }
+    }
+  ],
+  "type": "default",
+  "id": "CanRobotMoveForm"
+}

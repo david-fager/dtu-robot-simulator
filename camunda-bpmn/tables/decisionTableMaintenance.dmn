@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" id="Decide_maintenance" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.12.0">
+  <decision id="decide_maintenance" name="Determine status of maintenance">
+    <decisionTable id="DecisionTable_0ukg8he" hitPolicy="FIRST">
+      <input id="InputClause_12tu70e" label="finalTemp" biodi:width="213">
+        <inputExpression id="LiteralExpression_0ux0j6c" typeRef="double">
+          <text>finalTemp</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0rz150m" label="finalRes">
+        <inputExpression id="LiteralExpression_0n1ccs6" typeRef="double">
+          <text>finalRes</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0kiha1w" label="lastRepReason">
+        <inputExpression id="LiteralExpression_1hl2kde" typeRef="string">
+          <text>lastRepReason</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="output" name="output" typeRef="string" biodi:width="211" />
+      <rule id="DecisionRule_17oge9q">
+        <inputEntry id="UnaryTests_1ioog70">
+          <text>[90.0..95.0[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_17om5t8">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ta7a3z">
+          <text>"software patch"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_16syhmj">
+          <text>"software maintenance"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0mvmwce">
+        <inputEntry id="UnaryTests_0wcyrx4">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1xcp82r">
+          <text>[1.0..2.0[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0rx7yjp">
+          <text>"software patch"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1ttsw77">
+          <text>"software maintenance"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1e1gb4d">
+        <inputEntry id="UnaryTests_0xsps3h">
+          <text>&gt;= 90.0</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1re9yi7">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0oto8mi">
+          <text>"motor stop"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_02bitko">
+          <text>"motor maintenance"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1dutuwq">
+        <inputEntry id="UnaryTests_078bnwo">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0drrdw4">
+          <text>&gt;= 1.0</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1qg4b1q">
+          <text>"batteries low"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_18gpd70">
+          <text>"battery maintenance"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1wgouta">
+        <inputEntry id="UnaryTests_1p7wprl">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1arpbjn">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0hvu250">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1eby5si">
+          <text>"general maintenance"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="decide_maintenance">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

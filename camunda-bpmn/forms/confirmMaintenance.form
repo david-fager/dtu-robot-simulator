@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "components": [
+    {
+      "action": "submit",
+      "label": "OK",
+      "type": "button",
+      "id": "Field_1u2z923",
+      "key": "field_03o3oab"
+    }
+  ],
+  "type": "default",
+  "id": "confirmMaintenanceTypeForm",
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.16"
+}
