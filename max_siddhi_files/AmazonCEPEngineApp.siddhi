@@ -96,19 +96,32 @@ insert into AlertHighResStream;
 
 /** insert into table from file source **/
 from dbStream
-select robotId, repReason as lastRepReason
+select robotId, repReason as lastRepReason, isRepair
 update or insert into robotLastRepTable
-set robotLastRepTable.lastRepReason = lastRepReason
+set robotLastRepTable.isRepair = isRepair, robotLastRepTable.lastRepReason = lastRepReason
 on robotLastRepTable.robotId == robotId;
 
-/** enrich temp and rmesistance events with last rep reason attribute **/
+from AlertHighTempStream
+select robotId
+update robotLastRepTable
+set robotLastRepTable.isRepair = true
+on robotLastRepTable.robotId == robotId;
 
+from AlertHighResStream
+select robotId
+update robotLastRepTable
+set robotLastRepTable.isRepair = true
+on robotLastRepTable.robotId == robotId;
+
+/***************************************** PRODUCE EVENT TO CONSUMER *****************************************/
+
+/** enrich temp and resistance events with last rep reason attribute **/
 from AlertHighTempStream as t join robotLastRepTable as r
-    on t.robotId == r.robotId
-select t.startTime, 'msgSensorData' as messageName, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
+    on t.robotId == r.robotId and not r.isRepair
+select t.startTime, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
 insert into TempOutStream;
 
 from AlertHighResStream as t join robotLastRepTable as r
-    on t.robotId == r.robotId
-select t.startTime, 'msgSensorData' as messageName, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
+    on t.robotId == r.robotId and not r.isRepair
+select t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
 insert into ResOutStream;
