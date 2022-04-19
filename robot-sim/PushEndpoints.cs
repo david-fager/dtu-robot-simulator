@@ -5,7 +5,7 @@ namespace robot_sim
 {
     public static class PushEndpoints
     {
-        public static string BaseURL = "http://localhost:8888";
+        public static string BaseURL = "http://localhost:8001";
 
         public static void PushToEndpoints(int tickSpeed, int time, List<Robot> robots)
         {

@@ -32,14 +32,13 @@
       <bpmn:outgoing>Flow_00s4z9j</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0oe6el0" messageRef="msgSensorData" />
     </bpmn:startEvent>
-    <bpmn:task id="Activity_1qaj6y5" name="conduct maintenance">
-      <bpmn:incoming>Flow_1d2sn7b</bpmn:incoming>
-      <bpmn:outgoing>Flow_0jn5744</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:businessRuleTask id="Activity_0m3akkr" name="Determine maintenance type" camunda:resultVariable="maintenance_type" camunda:decisionRef="decide_maintenance">
+    <bpmn:businessRuleTask id="Activity_0m3akkr" name="Determine maintenance type" camunda:resultVariable="maintenance_type" camunda:decisionRef="decide_maintenance" camunda:mapDecisionResult="singleEntry">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="battery_internal_resistance" />
+          <camunda:inputParameter name="sensorDataMaintenance">{"finalTemp":${execution.getVariable("finalTemp")},
+"finalRes":${execution.getVariable("finalRes")}, 
+"lastRepReason":${execution.getVariable("lastPepReason")}
+}</camunda:inputParameter>
           <camunda:inputParameter name="motor_temp" />
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -55,7 +54,7 @@
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="payload">{"maintenanceArea":${maintenance_type}, "robotID": ${robotID}}</camunda:inputParameter>
+            <camunda:inputParameter name="payload">{"maintenanceArea": Go to ${execution.getVariable("maintenance_type")}, "robotId": ${robotId}}</camunda:inputParameter>
             <camunda:inputParameter name="headers">
               <camunda:map>
                 <camunda:entry key="Content-Type">application/json</camunda:entry>
@@ -64,7 +63,7 @@
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="url">http://127.0.0.1:8001/camunda-stream</camunda:inputParameter>
           </camunda:inputOutput>
-          <camunda:connectorId>maintenance-area-connector</camunda:connectorId>
+          <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1bi3xo2</bpmn:incoming>
@@ -72,6 +71,10 @@
     </bpmn:serviceTask>
     <bpmn:dataObjectReference id="DataObjectReference_1j7g08e" name="TODO: change maintenance area variable to the one actually created by the form" dataObjectRef="DataObject_0c6w9of" />
     <bpmn:dataObject id="DataObject_0c6w9of" />
+    <bpmn:manualTask id="Activity_1qaj6y5" name="conduct maintenance">
+      <bpmn:incoming>Flow_1d2sn7b</bpmn:incoming>
+      <bpmn:outgoing>Flow_0jn5744</bpmn:outgoing>
+    </bpmn:manualTask>
   </bpmn:process>
   <bpmn:message id="msgSensorData" name="msgSensorData" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -122,9 +125,6 @@
           <dc:Bounds x="204" y="492" width="86" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1qaj6y5_di" bpmnElement="Activity_1qaj6y5">
-        <dc:Bounds x="780" y="590" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0m3akkr_di" bpmnElement="Activity_0m3akkr">
         <dc:Bounds x="320" y="427" width="100" height="80" />
       </bpmndi:BPMNShape>
@@ -136,6 +136,9 @@
         <bpmndi:BPMNLabel>
           <dc:Bounds x="766" y="442" width="89" height="80" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1770cok_di" bpmnElement="Activity_1qaj6y5">
+        <dc:Bounds x="780" y="590" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_1vczjok_di" bpmnElement="Participant_1vczjok" isHorizontal="true">
         <dc:Bounds x="160" y="190" width="859" height="60" />
