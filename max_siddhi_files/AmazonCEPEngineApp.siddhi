@@ -117,11 +117,11 @@ on robotLastRepTable.robotId == robotId;
 
 /** enrich temp and resistance events with last rep reason attribute **/
 from AlertHighTempStream as t join robotLastRepTable as r
-    on t.robotId == r.robotId and not r.isRepair
+    on t.robotId == r.robotId and r.isRepair == false
 select t.startTime, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
 insert into TempOutStream;
 
 from AlertHighResStream as t join robotLastRepTable as r
-    on t.robotId == r.robotId and not r.isRepair
+    on t.robotId == r.robotId and r.isRepair == false
 select t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
 insert into ResOutStream;
