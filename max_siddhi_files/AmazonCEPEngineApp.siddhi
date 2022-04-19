@@ -11,7 +11,7 @@ mode='LINE',
 tailing='true',
 file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
 @map(type='json'))
-define stream dbStream (robotId string, repReason string);
+define stream dbStream (robotId string, repReason string, isRepair bool);
 
 @sink(type='log', prefix='temperature status:')
 @sink(type='http',
@@ -49,7 +49,7 @@ define stream ResOutStream(startTime int, messageName string, robotId string, in
 
 @primaryKey('robotId')
 @index('robotId')
-define table robotLastRepTable (robotId string, lastRepReason string);
+define table robotLastRepTable (robotId string, lastRepReason string, isRepair bool);
 
 @source(type='http', receiver.url="http://127.0.0.1:8001/camunda-stream", @map(type='json'))
 @sink(type='log' , prefix='Robot maintenance area: ') 
