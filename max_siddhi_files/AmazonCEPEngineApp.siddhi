@@ -3,32 +3,43 @@
 
 @App:description("CEP engine for Amazon robitcs fulfillment center")
 
-@source(type='http', receiver.url='http://0.0.0.0:8001/sensor', @map(type='json', @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
+@source(type='http', receiver.url='http://127.0.0.1:8001/sensor', @map(type='json', @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
 define stream MonitoringDataStream (time int, robotId string, tempKelv float, res float);
 
 @source(type='file',
 mode='LINE',
 tailing='true',
-file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
+/*file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
+/*file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
+file.uri='file:\\C:\Users\Stina\Documents\DTU\2_Semester\02268_Procesorienterede_og_event-drevne_softwaresystemer\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', 
 @map(type='json'))
 define stream dbStream (robotId string, repReason string, isRepair bool);
 
 @sink(type='log', prefix='temperature status:')
 @sink(type='http',
-    publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
-        headers = "'Host:127.0.0.1'", 
+    /*publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
+        headers = "'Host:127.0.0.1'", */
+    publisher.url = 'http://localhost:8080/engine-rest/message', 
+        headers = "'Host:localhost:8080",
         @map(type='json', @payload("""{"messageName": "{{messageName}}",
             "processVariables": {
-                "motor_temp": {
-                    "value": "-"
-                },
-                "battery_internal_resistance ": {
-                    "value": "High"
-                }
+                "robotId" : { 
+                  "value" : "{{robotId}}", 
+                  "type" : "String" },
+                "finalTemp" : { 
+                  "value" : "{{finalTemp}}", 
+                  "type" : "Double" },
+                "finalRes" : { 
+                  "value" : null, 
+                  "type" : "Double" },
+                "lastRepReason" : { 
+                  "value" : "{{lastRepReason}}", 
+                  "type" : "String" }
+              
             }
         }
         """)))
-define stream TempOutStream(startTime int, messageName string , robotId string, initialTemp double, finalTemp double, lastRepReason string);
+define stream TempOutStream(messageName string, startTime int, robotId string, initialTemp double, finalTemp double, lastRepReason string);
 
 @sink(type='log', prefix='resistance status:')
 @sink(type='http',
@@ -36,16 +47,22 @@ define stream TempOutStream(startTime int, messageName string , robotId string, 
         headers = "'Host:127.0.0.1'", 
         @map(type='json', @payload("""{"messageName": "{{messageName}}",
             "processVariables": {
-                "motor_temp": {
-                    "value": "High"
-                },
-                "battery_internal_resistance ": {
-                    "value": "-"
-                }
+                "robotId" : { 
+                  "value" : "{{robotId}}", 
+                  "type" : "String" },
+                "finalTemp" : { 
+                  "value" : "null", 
+                  "type" : "Double" },
+                "finalRes" : { 
+                  "value" : "{{finalRes}}", 
+                  "type" : "Double" },
+                "lastRepReason" : { 
+                  "value" : "{{lastRepReason}}", 
+                  "type" : "String" }
             }
         }
         """)))
-define stream ResOutStream(startTime int, messageName string, robotId string, initialRes int, finalRes float, lastRepReason string);
+define stream ResOutStream(messageName string, startTime int, robotId string, initialRes int, finalRes float, lastRepReason string);
 
 @primaryKey('robotId')
 @index('robotId')
@@ -53,7 +70,9 @@ define table robotLastRepTable (robotId string, lastRepReason string, isRepair b
 
 @source(type='http', receiver.url="http://127.0.0.1:8001/camunda-stream", @map(type='json'))
 @sink(type='log' , prefix='Robot maintenance area: ') 
-define stream robotMaintenanceStream(maintenanceArea string);
+/** define stream robotMaintenanceStream(maintenanceArea string); **/
+/** generic stream from camunda - all streams contains a string message from a service task or user task + robotId **/ 
+define stream robotMaintenanceStream(message string, robotId string);
 
 /***************************************** TEMPERATURE EPA's *****************************************/
 
@@ -101,6 +120,7 @@ update or insert into robotLastRepTable
 set robotLastRepTable.isRepair = isRepair, robotLastRepTable.lastRepReason = lastRepReason
 on robotLastRepTable.robotId == robotId;
 
+/*
 from AlertHighTempStream
 select robotId
 update robotLastRepTable
@@ -112,16 +132,32 @@ select robotId
 update robotLastRepTable
 set robotLastRepTable.isRepair = true
 on robotLastRepTable.robotId == robotId;
+*/
 
 /***************************************** PRODUCE EVENT TO CONSUMER *****************************************/
 
 /** enrich temp and resistance events with last rep reason attribute **/
 from AlertHighTempStream as t join robotLastRepTable as r
-    on t.robotId == r.robotId and r.isRepair == false
-select t.startTime, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
+    on t.robotId == r.robotId and r.isRepair == false 
+select "msgSensorData" as messageName, t.startTime, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
 insert into TempOutStream;
+
+/** Update DB **/
+from AlertHighTempStream
+select robotId
+update robotLastRepTable
+set robotLastRepTable.isRepair = true
+on robotLastRepTable.robotId == robotId;
+
 
 from AlertHighResStream as t join robotLastRepTable as r
     on t.robotId == r.robotId and r.isRepair == false
-select t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
+select "msgSensorData" as messageName, t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
 insert into ResOutStream;
+
+/** Update DB **/
+from AlertHighResStream
+select robotId
+update robotLastRepTable
+set robotLastRepTable.isRepair = true
+on robotLastRepTable.robotId == robotId;
