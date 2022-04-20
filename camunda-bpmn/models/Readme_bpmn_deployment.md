@@ -7,19 +7,19 @@ Add the following camunda-bpmn/dependencies to camunda-bpm-run-7.16.0\configurat
 
 ## Start the Camunda Application
 
-# Deploying robotMaintenanceV2.bpmn
+### Deploying robotMaintenanceV2.bpmn
 Deploy the BPMN robotMaintenanceV2.bpmn together with the form and DMN
     Add as files during deployment:
     * forms/confirmMaintenanceForm.form
     * tables/decisionTableMaintenance.dmn
 
-# Deploying the robotPosition.bpmn
+### Deploying the robotPosition.bpmn
 Deploy the BPMN robotPosition.bpmn together with the form and DMN
     Add as files during deployment:
     * canRobotMoveForm.form
     * decisionTablePosition.dmn
 
-## Start the Siddhi Apllication
+### Start the Siddhi Apllication
 Run AmazonCEPEngineApp
 Run robot-sim
 Check that tokens appear in the Camunda Cockpit 
