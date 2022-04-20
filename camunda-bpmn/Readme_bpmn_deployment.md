@@ -3,8 +3,8 @@
     * camunda-connect-connectors-all-1.4.0
     * camunda-connect-core-1.4.0
     * camunda-engine-plugin-connect-7.13.0
-
-## Start the Camunda Application
+    
+2. Start the Camunda Application
 
 ### Deploying robotMaintenanceV2.bpmn
 Deploy the BPMN robotMaintenanceV2.bpmn together with the form and DMN
