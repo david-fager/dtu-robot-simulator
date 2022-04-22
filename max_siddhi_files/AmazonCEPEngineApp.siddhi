@@ -15,6 +15,14 @@ file.uri='file:\\C:\Users\Stina\Documents\DTU\2_Semester\02268_Procesorienterede
 @map(type='json'))
 define stream dbStream (robotId string, repReason string, isRepair bool);
 
+@source(type = 'http', receiver.url = "http://0.0.0.0:8080/movement", 
+    @map(type = 'json', 
+        @attributes(time = "$.time", expectedPosX = "$.expectedPositionX", expectedPosY = "$.expectedPositionY", robotId = "$.robotID", currentPosX = "$.currentPositionX", currentPosY = "$.currentPositionY")))
+define stream MovementDataStream (time int, robotId string, currentPosX int, currentPosY int, expectedPosX int, expectedPosY int);
+
+@sink(type = 'log', prefix = "movement-status")
+define stream MovementOutStream (robotId string, time int, currentPosX int, currentPosY int, finalTemp double, finalRes double);
+
 @sink(type='log', prefix='temperature status:')
 @sink(type='http',
     /*publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
@@ -73,6 +81,29 @@ define table robotLastRepTable (robotId string, lastRepReason string, isRepair b
 /** define stream robotMaintenanceStream(maintenanceArea string); **/
 /** generic stream from camunda - all streams contains a string message from a service task or user task + robotId **/ 
 define stream robotMaintenanceStream(message string, robotId string);
+
+/*
+********************* MOVEMENT STUFF ***********************
+*/
+@info(name='transit-movement') 
+from MovementDataStream, MonitoringDataStream, TempTranslationStream 
+select MovementDataStream.robotId, MovementDataStream.time, MovementDataStream.currentPosX, MovementDataStream.currentPosY, TempTranslationStream.tempCelc, MonitoringDataStream.res
+insert into MovementOutStream;
+
+@info(name='convert-postion')
+from MovementDataStream
+select robotId, time, NOT (currentPosX == expectedPosX and currentPosY == expectedPosY) as offRoute
+insert into convertedMovementStream;
+
+@info(name='filter-position')
+from convertedMovementStream[offRoute == true]
+select robotId, time, offRoute
+insert into OffPositionRoute;
+
+@info(name='pattern-off-position')
+from every( e1=OffPositionStream ) -> e2 = convertedMovementStream[e1.robotId == robotId] within 30 seconds
+select e1.time as startTime, e1.robotId, e1.OffRoute
+insert into AlertOffPostion;
 
 /***************************************** TEMPERATURE EPA's *****************************************/
 
