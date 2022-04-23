@@ -3,7 +3,9 @@
 
 @App:description("CEP engine for Amazon robitcs fulfillment center")
 
-@source(type='http', receiver.url='http://127.0.0.1:8001/sensor', @map(type='json', @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
+@source(type='http', receiver.url='http://127.0.0.1:8001/sensor', 
+    @map(type='json',
+        @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
 define stream MonitoringDataStream (time int, robotId string, tempKelv float, res float);
 
 @source(type='file',
@@ -13,15 +15,19 @@ tailing='true',
 /*file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
 file.uri='file:\\C:\Users\Stina\Documents\DTU\2_Semester\02268_Procesorienterede_og_event-drevne_softwaresystemer\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', 
 @map(type='json'))
-define stream dbStream (robotId string, repReason string, isRepair bool);
+define stream dbStream (robotId string, repReason string, isRepair bool, isOffRoute bool);
 
-@source(type = 'http', receiver.url = "http://0.0.0.0:8080/movement", 
+@source(type = 'http', receiver.url = "http://127.0.0.1:8001/movement", 
     @map(type = 'json', 
-        @attributes(time = "$.time", expectedPosX = "$.expectedPositionX", expectedPosY = "$.expectedPositionY", robotId = "$.robotID", currentPosX = "$.currentPositionX", currentPosY = "$.currentPositionY")))
-define stream MovementDataStream (time int, robotId string, currentPosX int, currentPosY int, expectedPosX int, expectedPosY int);
+        @attributes(time = "$.time", robotId = "$.robotID", expectedPositionX = "$.expectedPositionX", expectedPositionY = "$.expectedPositionY", currentPositionX = "$.currentPositionX", currentPositionY = "$.currentPositionY")))
+define stream PositionDataStream (time int, robotId string, expectedPositionX int, expectedPositionY int, currentPositionX int, currentPositionY int);
 
-@sink(type = 'log', prefix = "movement-status")
-define stream MovementOutStream (robotId string, time int, currentPosX int, currentPosY int, finalTemp double, finalRes double);
+
+
+@sink(type = 'log', prefix = "position status:")
+define stream PositionOutStream (messageName string, startTime int, robotId string, currentPositionX int, currentPositionY int, finalTemp double, finalRes float, lastRepReason string);
+
+
 
 @sink(type='log', prefix='temperature status:')
 @sink(type='http',
@@ -74,7 +80,7 @@ define stream ResOutStream(messageName string, startTime int, robotId string, in
 
 @primaryKey('robotId')
 @index('robotId')
-define table robotLastRepTable (robotId string, lastRepReason string, isRepair bool);
+define table robotTable (robotId string, lastRepReason string, isRepair bool, isOffRoute bool);
 
 @source(type='http', receiver.url="http://127.0.0.1:8001/camunda-stream", @map(type='json'))
 @sink(type='log' , prefix='Robot maintenance area: ') 
@@ -83,27 +89,41 @@ define table robotLastRepTable (robotId string, lastRepReason string, isRepair b
 define stream robotMaintenanceStream(message string, robotId string);
 
 /*
-********************* MOVEMENT STUFF ***********************
+********************* POSITION EPA's ***********************
 */
 @info(name='transit-movement') 
-from MovementDataStream, MonitoringDataStream, TempTranslationStream 
-select MovementDataStream.robotId, MovementDataStream.time, MovementDataStream.currentPosX, MovementDataStream.currentPosY, TempTranslationStream.tempCelc, MonitoringDataStream.res
-insert into MovementOutStream;
+from PositionDataStream, MonitoringDataStream
+select  'message' as messageName,
+        PositionDataStream.robotId as robotId, 
+        PositionDataStream.time as time, 
+        PositionDataStream.currentPositionX  as currentPositionX,
+        PositionDataStream.currentPositionY  as currentPositionY,
+        PositionDataStream.expectedPositionX as expectedPositionX,
+        PositionDataStream.expectedPositionY as expectedPositionY,
+        MonitoringDataStream.tempKelv as tempKelv, 
+        MonitoringDataStream.res as res
+insert into MovementSensorStream;
 
 @info(name='convert-postion')
-from MovementDataStream
-select robotId, time, NOT (currentPosX == expectedPosX and currentPosY == expectedPosY) as offRoute
+from MovementSensorStream
+select robotId, time, tempKelv, res, currentPositionX, currentPositionY, NOT (currentPositionX == expectedPositionX and currentPositionY == expectedPositionY) as offRoute
 insert into convertedMovementStream;
 
 @info(name='filter-position')
 from convertedMovementStream[offRoute == true]
-select robotId, time, offRoute
-insert into OffPositionRoute;
+select robotId, time, tempKelv, res, currentPositionX, currentPositionY, offRoute
+insert into OffPositionStream;
+
+@info(name='translate-fahrenheit-to-celc2')
+from OffPositionStream
+select time, robotId, math:round(math:floor(tempKelv-32.0)) / 1.8 as tempCelc, res, currentPositionX, currentPositionY, offRoute
+insert into PositionTempTranslationStream;
 
 @info(name='pattern-off-position')
-from every( e1=OffPositionStream ) -> e2 = convertedMovementStream[e1.robotId == robotId] within 30 seconds
-select e1.time as startTime, e1.robotId, e1.OffRoute
+from every( e1=PositionTempTranslationStream ) -> e2 = convertedMovementStream[e1.robotId == robotId] within 30 seconds
+select e1.time as startTime, e1.robotId, e1.tempCelc, e1.res, e1.currentPositionX, e1.currentPositionY, e1.offRoute
 insert into AlertOffPostion;
+
 
 /***************************************** TEMPERATURE EPA's *****************************************/
 
@@ -146,10 +166,12 @@ insert into AlertHighResStream;
 
 /** insert into table from file source **/
 from dbStream
-select robotId, repReason as lastRepReason, isRepair
-update or insert into robotLastRepTable
-set robotLastRepTable.isRepair = isRepair, robotLastRepTable.lastRepReason = lastRepReason
-on robotLastRepTable.robotId == robotId;
+select robotId, repReason as lastRepReason, isRepair, isOffRoute
+update or insert into robotTable
+set robotTable.isRepair = isRepair, robotTable.lastRepReason = lastRepReason
+on robotTable.robotId == robotId;
+
+
 
 /*
 from AlertHighTempStream
@@ -168,7 +190,7 @@ on robotLastRepTable.robotId == robotId;
 /***************************************** PRODUCE EVENT TO CONSUMER *****************************************/
 
 /** enrich temp and resistance events with last rep reason attribute **/
-from AlertHighTempStream as t join robotLastRepTable as r
+from AlertHighTempStream as t join robotTable as r
     on t.robotId == r.robotId and r.isRepair == false 
 select "msgSensorData" as messageName, t.startTime, t.robotId, t.initialTemp, t.finalTemp, r.lastRepReason
 insert into TempOutStream;
@@ -176,12 +198,12 @@ insert into TempOutStream;
 /** Update DB **/
 from AlertHighTempStream
 select robotId
-update robotLastRepTable
-set robotLastRepTable.isRepair = true
-on robotLastRepTable.robotId == robotId;
+update robotTable
+set robotTable.isRepair = true
+on robotTable.robotId == robotId;
 
 
-from AlertHighResStream as t join robotLastRepTable as r
+from AlertHighResStream as t join robotTable as r
     on t.robotId == r.robotId and r.isRepair == false
 select "msgSensorData" as messageName, t.startTime, t.robotId, t.initialRes, t.finalRes, r.lastRepReason
 insert into ResOutStream;
@@ -189,6 +211,18 @@ insert into ResOutStream;
 /** Update DB **/
 from AlertHighResStream
 select robotId
-update robotLastRepTable
-set robotLastRepTable.isRepair = true
-on robotLastRepTable.robotId == robotId;
+update robotTable
+set robotTable.isRepair = true
+on robotTable.robotId == robotId;
+
+from AlertOffPostion as t join robotTable as r
+    on t.robotId == r.robotId and r.isOffRoute == false
+select "msgPositionData" as messageName, t.startTime, t.robotId, t.currentPositionX, t.currentPositionY, t.tempCelc as finalTemp, t.res as finalRes, r.lastRepReason
+insert into PositionOutStream;
+
+/** Update DB **/
+from AlertOffPostion
+select robotId
+update robotTable
+set robotTable.isOffRoute = true
+on robotTable.robotId == robotId;
