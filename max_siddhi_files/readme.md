@@ -1,14 +1,14 @@
 This folder contains the files you will need to run the siddhi app:
-AmazonCEPEngineApp.siddhi
-robot_rep_data
+* AmazonCEPEngineApp.siddhi
+* robot_rep_data
 
 ############## file locations ##############
 
-Add the AmazonCEPEngineApp.siddhi file to:
+Add the AmazonCEPEngineApp.siddhi file to:\
 \siddhi-tooling-5.1.2\wso2\tooling\deployment\workspace
 
 
-Create the folder <files>:
+Create the folder <files>:\
 \siddhi-tooling-5.1.2\resources\files
 
 Add robot_rep_data to the folder.
