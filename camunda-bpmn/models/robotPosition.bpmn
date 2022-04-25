@@ -184,8 +184,8 @@
     </bpmn:serviceTask>
   </bpmn:process>
   <bpmn:message id="Message_177xcfe" />
-  <bpmn:message id="Message_0wrx0lx" name="RobotStoppedSendingPositions" />
-  <bpmn:message id="Message_0nrbe11" name="RobotIsInWrongPosition" />
+  <bpmn:message id="Message_0wrx0lx" name="msgRobotStoppedSendingPositionData" />
+  <bpmn:message id="Message_0nrbe11" name="msgPositionData" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_04g242z">
       <bpmndi:BPMNShape id="Participant_067hda9_di" bpmnElement="Participant_0z9re1z" isHorizontal="true">
