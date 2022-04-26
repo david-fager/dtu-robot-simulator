@@ -19,7 +19,7 @@ define stream dbStream (robotId string, repReason string, isRepair bool, isOffRo
 
 @source(type = 'http', receiver.url = "http://127.0.0.1:8001/movement",
     @map(type = 'json', 
-        @attributes(time = "$.time", robotId = "$.robotID", expectedPositionX = "$.expectedPositionX", expectedPositionY = "$.expectedPositionY", currentPositionX = "$.currentPositionX", currentPositionY = "$.currentPositionY")))
+        @attributes(time = "$.time", robotId = "$.robotID", expectedPositionX = "$.expectedX", expectedPositionY = "$.expectedY", currentPositionX = "$.currentX", currentPositionY = "$.currentY")))
 define stream PositionDataStream (time int, robotId string, expectedPositionX int, expectedPositionY int, currentPositionX int, currentPositionY int);
 
 
