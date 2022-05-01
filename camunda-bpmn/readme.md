@@ -25,10 +25,11 @@ Deploy the BPMN BPMN_pick_order_2.bpmn together with the forms
     * isToteFullForm.form
     * processToteToPackingForm.form
 
+### Deploying the BPMN_pick_order_2.bpmn
+Deploy the BPMN BPMN_pick_order_2.bpmn together with the forms
+1. No files needs to be added during deployment.
 
-
-
-### Start the Siddhi Apllication
+### Run the processes along with the Siddhi Apllication
 1. Run AmazonCEPEngineApp
 2. Run robot-sim
 3. Check that tokens appear in the Camunda Cockpit 
