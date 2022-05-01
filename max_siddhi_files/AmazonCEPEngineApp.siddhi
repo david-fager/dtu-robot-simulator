@@ -1,18 +1,18 @@
 @App:name("AmazonCEPEngineApp")
 
 
-@App:description("CEP engine for Amazon robitcs fulfillment center")
+@App:description("CEP engine for Amazon robotics fulfillment center")
 
 @source(type='http', receiver.url='http://127.0.0.1:8001/sensor', 
     @map(type='json',
-        @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
-define stream SensorDataStream (time int, robotId string, tempKelv float, res float);
+        @attributes(time='$.time',robotId = '$.robotID', tempFahr = '$.motorTemperature', res = '$.batteryResistance'))) 
+define stream SensorDataStream (time int, robotId string, tempFahr float, res float);
 
 @source(type='file',
 mode='LINE',
 tailing='true',
-/*file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
-/*file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', /** remember to change the uri of the file accordingly - keep file:\ **/
+/** remember to change the uri of the file accordingly - keep file:\ **/
+/*file.uri='file:\\C:\Users\User\Desktop\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', */
 file.uri='file:\\C:\Users\Stina\Documents\DTU\2_Semester\02268_Procesorienterede_og_event-drevne_softwaresystemer\siddhi-tooling-5.1.2\resources\files\robot_rep_data.txt', 
 @map(type='json'))
 define stream dbStream (robotId string, repReason string, isRepair bool, isOffRoute bool);
@@ -26,13 +26,11 @@ define stream PositionDataStream (time int, robotId string, expectedPositionX in
 
 @sink(type = 'log', prefix = "position status")
 @sink(type='http',
-    /*publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
-        headers = "'Host:127.0.0.1'", */
     publisher.url = 'http://localhost:8080/engine-rest/message', 
         headers = "'Host:localhost:8080",
         @map(type='json', @payload("""{"messageName": "{{messageName}}",
             "processVariables": {
-                "startTime" : { 
+                "startTime" : {  
                   "value" : "{{startTime}}", 
                   "type" : "Integer" },
                 "robotId" : { 
@@ -115,7 +113,6 @@ define table robotTable (robotId string, lastRepReason string, isRepair bool, is
 
 @source(type='http', receiver.url="http://127.0.0.1:8001/camunda-stream", @map(type='json'))
 @sink(type='log' , prefix='Robot maintenance area: ') 
-/** define stream robotMaintenanceStream(maintenanceArea string); **/
 /** generic stream from camunda - all streams contains a string message from a service task or user task + robotId **/ 
 define stream robotMaintenanceStream(message string, robotId string);
 
@@ -134,25 +131,18 @@ from PositionDataStream#window.time(1 min) as PD
         PD.currentPositionY  as currentPositionY,
         PD.expectedPositionX as expectedPositionX,
         PD.expectedPositionY as expectedPositionY,
-        SD.tempKelv as tempKelv, 
+        SD.tempFahr as tempFahr, 
         SD.res as res
 insert into PositionSensorStream;
 
-/*
-@info(name='convert-postion')
-from PositionSensorStream
-select robotId, time, tempKelv, res, currentPositionX, currentPositionY, NOT (currentPositionX == expectedPositionX and currentPositionY == expectedPositionY) as offRoute
-insert into convertedMovementStream;
-*/
-
 @info(name='filter-position')
 from PositionSensorStream[currentPositionX != expectedPositionX or currentPositionY != expectedPositionY]
-select robotId, time, tempKelv, res, currentPositionX, currentPositionY
+select robotId, time, tempFahr, res, currentPositionX, currentPositionY
 insert into OffPositionStream;
 
 @info(name='translate-fahrenheit-to-celc2')
 from OffPositionStream
-select time, robotId, math:round(math:floor(tempKelv-32.0)) / 1.8 as tempCelc, res, currentPositionX, currentPositionY
+select time, robotId, math:round(math:floor(tempFahr-32.0)) / 1.8 as tempCelc, res, currentPositionX, currentPositionY
 insert into PositionTempTranslationStream;
 
 @info(name='pattern-off-position')
@@ -166,7 +156,7 @@ insert into AlertOffPostion;
 /** translation of fahrenheit to celcius **/
 @info(name='translate-fahrenheit-to-celc')
 from SensorDataStream
-select time, robotId, math:round(math:floor(tempKelv-32.0)) / 1.8 as tempCelc, res
+select time, robotId, math:round(math:floor(tempFahr-32.0)) / 1.8 as tempCelc, res
 insert into TempTranslationStream;
 
 
@@ -209,19 +199,6 @@ on robotTable.robotId == robotId;
 
 
 
-/*
-from AlertHighTempStream
-select robotId
-update robotLastRepTable
-set robotLastRepTable.isRepair = true
-on robotLastRepTable.robotId == robotId;
-
-from AlertHighResStream
-select robotId
-update robotLastRepTable
-set robotLastRepTable.isRepair = true
-on robotLastRepTable.robotId == robotId;
-*/
 
 /***************************************** PRODUCE EVENT TO CONSUMER *****************************************/
 

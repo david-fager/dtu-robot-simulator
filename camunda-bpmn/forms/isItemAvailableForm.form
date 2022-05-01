@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "components": [
+    {
+      "label": "Is the item available?",
+      "type": "textfield",
+      "id": "Field_0sk90ez",
+      "key": "isItemAvailable",
+      "validate": {
+        "required": true,
+        "regularExpressionPattern": "yes|no"
+      }
+    }
+  ],
+  "type": "default",
+  "id": "IsItemAvailable"
+}

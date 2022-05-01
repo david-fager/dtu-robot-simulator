@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "components": [
+    {
+      "label": "Is the tote full?",
+      "type": "textfield",
+      "id": "Field_0sk90ez",
+      "key": "isToteFull",
+      "validate": {
+        "required": true,
+        "regularExpressionPattern": "yes|no"
+      }
+    }
+  ],
+  "type": "default",
+  "id": "IsToteFull"
+}

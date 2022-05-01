@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "components": [
+    {
+      "action": "submit",
+      "label": "Process Tote To Packing",
+      "type": "button",
+      "id": "Field_0itrqw7",
+      "key": "field_0svpjlz"
+    }
+  ],
+  "type": "default",
+  "id": "ProcessToteToPacking"
+}
