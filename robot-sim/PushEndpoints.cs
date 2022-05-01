@@ -14,7 +14,7 @@ namespace robot_sim
                 foreach (var robot in robots)
                 {
                     //PushFull(client, time, robot);
-                    //PushMovement(client, time, robot);
+                    PushMovement(client, time, robot);
                     PushSensor(client, time, robot);
                 }
             }
@@ -41,8 +41,10 @@ namespace robot_sim
             {
                 time = time,
                 robotID = robot.robotID,
-                currentPosition = robot.currentPosition,
-                expectedPosition = robot.expectedPosition,
+                currentX = robot.currentPosition.x,
+                currentY = robot.currentPosition.y,
+                expectedX = robot.expectedPosition.x,
+                expectedY = robot.expectedPosition.y,
             }));
         }
 

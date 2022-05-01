@@ -6,7 +6,7 @@
 @source(type='http', receiver.url='http://127.0.0.1:8001/sensor', 
     @map(type='json',
         @attributes(time='$.time',robotId = '$.robotID', tempKelv = '$.motorTemperature', res = '$.batteryResistance'))) 
-define stream MonitoringDataStream (time int, robotId string, tempKelv float, res float);
+define stream SensorDataStream (time int, robotId string, tempKelv float, res float);
 
 @source(type='file',
 mode='LINE',
@@ -17,19 +17,50 @@ file.uri='file:\\C:\Users\Stina\Documents\DTU\2_Semester\02268_Procesorienterede
 @map(type='json'))
 define stream dbStream (robotId string, repReason string, isRepair bool, isOffRoute bool);
 
-@source(type = 'http', receiver.url = "http://127.0.0.1:8001/movement", 
+@source(type = 'http', receiver.url = "http://127.0.0.1:8001/movement",
     @map(type = 'json', 
-        @attributes(time = "$.time", robotId = "$.robotID", expectedPositionX = "$.expectedPositionX", expectedPositionY = "$.expectedPositionY", currentPositionX = "$.currentPositionX", currentPositionY = "$.currentPositionY")))
+        @attributes(time = "$.time", robotId = "$.robotID", expectedPositionX = "$.expectedX", expectedPositionY = "$.expectedY", currentPositionX = "$.currentX", currentPositionY = "$.currentY")))
 define stream PositionDataStream (time int, robotId string, expectedPositionX int, expectedPositionY int, currentPositionX int, currentPositionY int);
 
 
 
-@sink(type = 'log', prefix = "position status:")
+@sink(type = 'log', prefix = "position status")
+@sink(type='http',
+    /*publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
+        headers = "'Host:127.0.0.1'", */
+    publisher.url = 'http://localhost:8080/engine-rest/message', 
+        headers = "'Host:localhost:8080",
+        @map(type='json', @payload("""{"messageName": "{{messageName}}",
+            "processVariables": {
+                "startTime" : { 
+                  "value" : "{{startTime}}", 
+                  "type" : "Integer" },
+                "robotId" : { 
+                  "value" : "{{robotId}}", 
+                  "type" : "String" },
+                "currentPositionX" : { 
+                  "value" : "{{currentPositionX}}", 
+                  "type" : "Integer" },
+                "currentPositionY" : { 
+                  "value" : "{{currentPositionX}}", 
+                  "type" : "Integer" },  
+                "finalTemp" : { 
+                  "value" : "{{finalTemp}}", 
+                  "type" : "Double" },
+                "finalRes" : { 
+                  "value" : "{{finalRes}}", 
+                  "type" : "Double" },
+                "lastRepReason" : { 
+                  "value" : "{{lastRepReason}}", 
+                  "type" : "String" }
+            }
+        }
+        """)))
 define stream PositionOutStream (messageName string, startTime int, robotId string, currentPositionX int, currentPositionY int, finalTemp double, finalRes float, lastRepReason string);
 
 
 
-@sink(type='log', prefix='temperature status:')
+@sink(type='log', prefix='temperature status')
 @sink(type='http',
     /*publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
         headers = "'Host:127.0.0.1'", */
@@ -55,7 +86,7 @@ define stream PositionOutStream (messageName string, startTime int, robotId stri
         """)))
 define stream TempOutStream(messageName string, startTime int, robotId string, initialTemp double, finalTemp double, lastRepReason string);
 
-@sink(type='log', prefix='resistance status:')
+@sink(type='log', prefix='resistance status')
 @sink(type='http',
     publisher.url= 'http://127.0.0.1:8080/engine-rest/message',
         headers = "'Host:127.0.0.1'", 
@@ -91,37 +122,42 @@ define stream robotMaintenanceStream(message string, robotId string);
 /*
 ********************* POSITION EPA's ***********************
 */
-@info(name='transit-movement') 
-from PositionDataStream, MonitoringDataStream
-select  'message' as messageName,
-        PositionDataStream.robotId as robotId, 
-        PositionDataStream.time as time, 
-        PositionDataStream.currentPositionX  as currentPositionX,
-        PositionDataStream.currentPositionY  as currentPositionY,
-        PositionDataStream.expectedPositionX as expectedPositionX,
-        PositionDataStream.expectedPositionY as expectedPositionY,
-        MonitoringDataStream.tempKelv as tempKelv, 
-        MonitoringDataStream.res as res
-insert into MovementSensorStream;
 
+@info(name='transit-movement') 
+from PositionDataStream#window.time(1 min) as PD 
+    join  SensorDataStream#window.length(1) as SD
+    on PD.robotId == SD.robotId and PD.time == SD.time
+    select 
+        PD.robotId as robotId, 
+        PD.time as time, 
+        PD.currentPositionX  as currentPositionX,
+        PD.currentPositionY  as currentPositionY,
+        PD.expectedPositionX as expectedPositionX,
+        PD.expectedPositionY as expectedPositionY,
+        SD.tempKelv as tempKelv, 
+        SD.res as res
+insert into PositionSensorStream;
+
+/*
 @info(name='convert-postion')
-from MovementSensorStream
+from PositionSensorStream
 select robotId, time, tempKelv, res, currentPositionX, currentPositionY, NOT (currentPositionX == expectedPositionX and currentPositionY == expectedPositionY) as offRoute
 insert into convertedMovementStream;
+*/
 
 @info(name='filter-position')
-from convertedMovementStream[offRoute == true]
-select robotId, time, tempKelv, res, currentPositionX, currentPositionY, offRoute
+from PositionSensorStream[currentPositionX != expectedPositionX or currentPositionY != expectedPositionY]
+select robotId, time, tempKelv, res, currentPositionX, currentPositionY
 insert into OffPositionStream;
 
 @info(name='translate-fahrenheit-to-celc2')
 from OffPositionStream
-select time, robotId, math:round(math:floor(tempKelv-32.0)) / 1.8 as tempCelc, res, currentPositionX, currentPositionY, offRoute
+select time, robotId, math:round(math:floor(tempKelv-32.0)) / 1.8 as tempCelc, res, currentPositionX, currentPositionY
 insert into PositionTempTranslationStream;
 
 @info(name='pattern-off-position')
-from every( e1=PositionTempTranslationStream ) -> e2 = convertedMovementStream[e1.robotId == robotId] within 30 seconds
-select e1.time as startTime, e1.robotId, e1.tempCelc, e1.res, e1.currentPositionX, e1.currentPositionY, e1.offRoute
+from every( e1=PositionTempTranslationStream ) -> e2 = OffPositionStream[e1.robotId == robotId] within 30 seconds
+select e1.time as startTime, e1.robotId, e1.tempCelc, e1.res, e1.currentPositionX, e1.currentPositionY
 insert into AlertOffPostion;
 
 
@@ -129,7 +165,7 @@ insert into AlertOffPostion;
 
 /** translation of fahrenheit to celcius **/
 @info(name='translate-fahrenheit-to-celc')
-from MonitoringDataStream
+from SensorDataStream
 select time, robotId, math:round(math:floor(tempKelv-32.0)) / 1.8 as tempCelc, res
 insert into TempTranslationStream;
 
